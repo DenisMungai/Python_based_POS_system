@@ -78,7 +78,7 @@ PALETTES: dict[str, Palette] = {
     "Slate": Palette("Slate", "#1E293B", "#334155", "#0F172A", "#F1F5F9", "#FFFFFF", **_BASE),
 }
 
-DEFAULT_PALETTE = PALETTES["Navy"]
+DEFAULT_PALETTE = PALETTES["Teal"]
 
 __all__ = [
     "DEFAULT_PALETTE", "PALETTES", "Palette", "UI_SCALE",
