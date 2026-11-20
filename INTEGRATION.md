@@ -12,6 +12,11 @@ integer thousandths (`quantity_milli`). Timestamps persisted by services are
 UTC ISO-8601 strings. SQL is restricted to `backend/repositories/` and
 `backend/core/migrations.py`, and values are bound parameters.
 
+For display, `backend.core.money.fmt_qty(quantity_milli)` returns a decimal
+string without insignificant trailing zeros. For example, `2000` displays as
+`"2"` and `1250` as `"1.25"`. This is formatting only: stored quantities remain
+integer thousandths, and meaningful fractional digits are preserved.
+
 Expected business errors derive from `PosError`: `ValidationError`,
 `NotFoundError`, `DuplicateError`, `InsufficientStockError`,
 `PermissionDeniedError`, `AuthenticationError`, `AccountLockedError`,
