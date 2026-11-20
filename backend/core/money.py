@@ -73,3 +73,8 @@ def milli_to_qty(quantity_milli: int) -> Decimal:
     if isinstance(quantity_milli, bool) or not isinstance(quantity_milli, int):
         raise ValidationError("Quantity milli-units must be an integer.")
     return Decimal(quantity_milli).scaleb(-3)
+
+
+def fmt_qty(quantity_milli: int) -> str:
+    """Format a quantity without insignificant trailing decimal zeros."""
+    return f"{milli_to_qty(quantity_milli).normalize():f}"

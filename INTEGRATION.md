@@ -120,6 +120,9 @@ are emitted after commit.
 - `register(name, phone="", email="", notes="")` -> customer ID.
 - `update(customer_id, **fields)` -> `None`; fields are `name`, `phone`,
   `email`, and `notes`.
+- `delete(customer_id)` -> `None`; removes customer details, detaches retained
+  sales and held carts, and writes audit/outbox records. Customers with
+  outstanding store credit cannot be deleted.
 - `search(query="", limit=100)` -> customer rows.
 - `get_with_history(customer_id)` -> customer and sale rows.
 - `add_store_credit(customer_id, amount_minor)` -> updated credit balance.

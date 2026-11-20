@@ -671,6 +671,31 @@ class CustomerService:
                 "customers", customer["uuid"], "update", fields, timestamp()
             )
 
+    def delete(self, customer_id: int) -> None:
+        """Delete customer details without deleting their sales or held carts."""
+        if self.auth and self.auth.enforcement_enabled:
+            self.auth.require_permission("customers.write")
+        now = timestamp()
+        with self.repo.database.transaction():
+            customer = self.repo.get("customers", customer_id)
+            if not customer:
+                raise NotFoundError("Customer was not found.")
+            if int(customer["credit_minor"]) != 0:
+                raise ValidationError("Settle the customer's store credit before deleting them.")
+            self.repo.delete_customer(customer_id)
+            self.repo.insert_outbox(
+                "customers", customer["uuid"], "delete", {"id": customer_id}, now
+            )
+            user = self.auth.current_user if self.auth else None
+            self.repo.insert("audit_log", {
+                "user_id": user.id if user else None,
+                "action": "delete",
+                "entity": "customer",
+                "entity_id": str(customer_id),
+                "details_json": json.dumps({"uuid": customer["uuid"]}, sort_keys=True),
+                "created_at": now,
+            })
+
     def search(self, query: str = "", limit: int = 100) -> list[dict[str, Any]]:
         """Search customer names, phone numbers, and email addresses."""
         if self.auth and self.auth.enforcement_enabled:

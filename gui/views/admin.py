@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 
 from backend.bootstrap import AppContext
 from backend.core.errors import PosError
-from backend.core.money import fmt, milli_to_qty
+from backend.core.money import fmt, fmt_qty
 from gui.i18n import t
 from gui.styles.qss import build_stylesheet
 from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, px
@@ -234,7 +234,7 @@ class ReportsView(QWidget):
         for row, item in enumerate(top):
             values = (
                 str(item["name"]),
-                str(milli_to_qty(int(item["quantity_milli"]))),
+                fmt_qty(int(item["quantity_milli"])),
                 fmt(int(item["total_minor"]), self.currency),
             )
             for column, value in enumerate(values):
@@ -246,7 +246,7 @@ class ReportsView(QWidget):
         breakdown_rows.extend(
             (
                 t("item_type", "Item type"),
-                f"{row['item_type']} ({milli_to_qty(int(row['quantity_milli'])):g})",
+                f"{row['item_type']} ({fmt_qty(int(row['quantity_milli']))})",
                 int(row["total_minor"]),
             )
             for row in report.get("item_types", [])

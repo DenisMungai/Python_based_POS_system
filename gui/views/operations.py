@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 
 from backend.bootstrap import AppContext
 from backend.core.errors import PermissionDeniedError, PosError
-from backend.core.money import fmt, qty_to_milli, to_minor
+from backend.core.money import fmt, fmt_qty, qty_to_milli, to_minor
 from gui.dialogs.csv_import import CsvImportPreviewDialog
 from gui.i18n import t
 from gui.styles.tokens import px
@@ -275,18 +275,61 @@ class CustomersView(QWidget):
                 self.table.setItem(row, column, QTableWidgetItem(value))
             actions = QWidget()
             action_layout = QHBoxLayout(actions)
-            action_layout.setContentsMargins(0, 0, 0, 0)
+            action_layout.setContentsMargins(px(4), px(3), px(4), px(3))
+            action_layout.setSpacing(px(6))
             history = QPushButton(t("history", "History"))
+            history.setMinimumWidth(px(82))
             history.clicked.connect(lambda _, item=customer: self._show_history(item))
             action_layout.addWidget(history)
             edit = QPushButton(t("edit", "Edit"))
+            edit.setMinimumWidth(px(68))
             edit.setEnabled(self.can_write)
             edit.clicked.connect(lambda _, item=customer: self._edit(item))
             action_layout.addWidget(edit)
-            self.table.setCellWidget(row, 4, actions)
+            delete = QPushButton(t("delete_customer", "Delete"))
+            delete.setMinimumWidth(px(78))
+            delete.setEnabled(self.can_write)
+            delete.clicked.connect(lambda _, item=customer: self._delete(item))
+            action_layout.addWidget(delete)
+            set_table_action_cell(self.table, row, 4, actions)
             self.table.setRowHeight(row, px(64))
         self.table.resizeColumnsToContents()
-        self.table.horizontalHeader().setStretchLastSection(True)
+        fit_table_action_column(self.table, 4)
+
+    def _delete(self, customer: dict[str, Any]) -> None:
+        if not self.can_write:
+            return
+        confirm = QDialog(self)
+        confirm.setWindowTitle(t("delete_customer", "Delete customer"))
+        confirm.setModal(True)
+        confirm.setMinimumWidth(px(420))
+        confirm_layout = QVBoxLayout(confirm)
+        confirm_layout.setContentsMargins(px(24), px(22), px(24), px(22))
+        message = t(
+            "delete_customer_confirmation",
+            "Delete {name}? Their contact details will be removed. Sales and held "
+            "sales will remain but will no longer be linked to this customer. "
+            "Settle any store credit first.",
+        ).format(name=customer["name"])
+        message_label = QLabel(message)
+        message_label.setWordWrap(True)
+        confirm_layout.addWidget(message_label)
+        buttons = QHBoxLayout()
+        cancel = QPushButton(t("cancel", "Cancel"))
+        cancel.clicked.connect(confirm.reject)
+        proceed = QPushButton(t("delete_customer", "Delete"))
+        proceed.clicked.connect(confirm.accept)
+        buttons.addWidget(cancel)
+        buttons.addWidget(proceed)
+        confirm_layout.addLayout(buttons)
+        if confirm.exec() != QDialog.DialogCode.Accepted:
+            return
+        try:
+            self.context.customers.delete(int(customer["id"]))
+            self.toast.show_message(t("customer_deleted", "Customer deleted."))
+            self.refresh()
+        except PosError as error:
+            self.toast.show_message(error.message)
 
 
 class SalesView(QWidget):
@@ -547,7 +590,7 @@ class ReturnDialog(QDialog):
         for row, item in enumerate(items):
             remaining = int(item["quantity_milli"]) - int(item["returned_milli"])
             self.table.setItem(row, 0, QTableWidgetItem(str(item["name_snapshot"])))
-            self.table.setItem(row, 1, QTableWidgetItem(str(remaining)))
+            self.table.setItem(row, 1, QTableWidgetItem(fmt_qty(remaining)))
             quantity = QLineEdit("0")
             quantity.setProperty("sale_item_id", int(item["id"]))
             quantity.setProperty("remaining_milli", remaining)

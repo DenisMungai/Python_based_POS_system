@@ -10,7 +10,9 @@ from backend.core.barcode import encode_code128, encode_ean13
 from backend.core.db import Database
 from backend.core.errors import ValidationError
 from backend.core.migrations import run_migrations
-from backend.core.money import apply_tax, extract_inclusive_tax, from_minor, qty_to_milli, to_minor
+from backend.core.money import (
+    apply_tax, extract_inclusive_tax, fmt_qty, from_minor, qty_to_milli, to_minor,
+)
 from backend.core.security import hash_password, hash_pin, verify_password
 
 
@@ -25,6 +27,11 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(qty_to_milli("1.250"), 1250)
         with self.assertRaises(ValidationError):
             qty_to_milli("1.0001")
+
+    def test_quantity_formatting_removes_only_insignificant_decimal_zeros(self) -> None:
+        self.assertEqual(fmt_qty(2000), "2")
+        self.assertEqual(fmt_qty(1250), "1.25")
+        self.assertEqual(fmt_qty(0), "0")
 
     def test_password_hash_is_salted_and_verified(self) -> None:
         first_salt, first_hash = hash_password("secure-password")

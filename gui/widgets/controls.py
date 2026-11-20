@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QPushButton, QToolButton, QVBoxLayout, QWidget, QHeaderView,
 )
 
-from backend.core.money import fmt, milli_to_qty
+from backend.core.money import fmt, fmt_qty
 from backend.services.support import ReceiptService
 from gui.icons import load_icon
 from gui.styles.tokens import DEFAULT_PALETTE, Palette, px
@@ -254,8 +254,7 @@ class QuantityStepper(QWidget):
         self.quantity_changed.emit(quantity_milli)
 
     def _refresh(self) -> None:
-        quantity = milli_to_qty(self._quantity_milli).normalize()
-        self.value_label.setText(f"{quantity:f}")
+        self.value_label.setText(fmt_qty(self._quantity_milli))
 
 
 class CartLineItem(QFrame):
@@ -423,9 +422,9 @@ class ReceiptWidget(QFrame):
             name.setWordWrap(True)
             layout.addWidget(name)
             detail = QHBoxLayout()
-            quantity = milli_to_qty(int(item["quantity_milli"])).normalize()
+            quantity = fmt_qty(int(item["quantity_milli"]))
             unit_price = fmt(int(item["unit_price_minor"]), receipt["currency"])
-            detail.addWidget(QLabel(f"{quantity:f} x {unit_price}"), 1)
+            detail.addWidget(QLabel(f"{quantity} x {unit_price}"), 1)
             detail.addWidget(QLabel(fmt(int(item["line_total_minor"]), receipt["currency"])))
             layout.addLayout(detail)
         separator = QFrame()
