@@ -23,6 +23,8 @@
 
 ## Final GUI and release
 
+- Emerald is the default accent, using `#15A046` for primary fills. Small text
+  on light surfaces uses the darker `#116B35` companion for WCAG AA contrast.
 - Operations and administration remain permission-gated through backend
   services; the Qt shell only hides routes for users without access.
 - Backup restore is restricted to paths in the application's managed backup

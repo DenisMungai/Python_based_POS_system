@@ -24,7 +24,7 @@ from gui.dialogs.profile import ProfileDialog
 from gui.dialogs.sale_complete import SaleCompleteDialog
 from gui.dialogs.setup import SetupDialog
 from gui.shell import AppWindow
-from gui.styles.tokens import px
+from gui.styles.tokens import DEFAULT_PALETTE, px
 from gui.views.current_sale import CurrentSaleView
 from gui.widgets import ProductCard, QuantityStepper, ReceiptWidget
 
@@ -53,6 +53,8 @@ def main() -> int:
         bridge = None
         try:
             application, bridge = create_application(context, [])
+            if DEFAULT_PALETTE.primary != "#15A046":
+                raise RuntimeError("The default primary accent is not the requested green.")
             if application.windowIcon().isNull():
                 raise RuntimeError("The POS application icon did not load.")
             quantity_stepper = QuantityStepper(2000)
@@ -248,6 +250,8 @@ def main() -> int:
             application.processEvents()
             if len(sale_view.cart) != 1 or sale_view.quote is None:
                 raise RuntimeError("Adding the product did not create a service-quoted cart.")
+            if not laptop_card.property("selected"):
+                raise RuntimeError("The selected sale item did not receive its green outline state.")
 
             state = {"complete": False, "receipt_preview": False, "error": ""}
             deadline = time.monotonic() + 8
@@ -294,6 +298,11 @@ def main() -> int:
                 active = QApplication.activeModalWidget()
                 if not isinstance(active, PaymentDialog):
                     state["error"] = "The checkout dialog was not active for payment."
+                    return
+                thumbnails = active.findChildren(QLabel, "productThumbnail")
+                if not thumbnails or thumbnails[0].pixmap() is None or thumbnails[0].pixmap().isNull():
+                    state["error"] = "The payment dialog did not display the product image."
+                    active.reject()
                     return
                 state["payment_attempted"] = True
                 QTest.keyClick(

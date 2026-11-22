@@ -154,7 +154,8 @@ raise `VoucherError`.
 ### SalesService
 
 - `quote_sale(lines, voucher_code=None, at=None)` -> current server-calculated
-  lines, subtotal, tax, discount, and total without mutating state.
+  lines, subtotal, tax, discount, and total without mutating state. Quoted
+  lines include the local `image_path` when an item image is configured.
 - `process_sale(lines, payments, customer_id=None, voucher_code=None, note="",
   user_id=None, at=None)` -> `SaleResult`. Each line requires `item_id` and
   either `quantity_milli` or `quantity`; each payment requires `method` and
