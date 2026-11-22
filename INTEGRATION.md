@@ -131,6 +131,9 @@ are emitted after commit.
 - `search(query="", limit=100)` -> customer rows.
 - `get_with_history(customer_id)` -> customer and sale rows.
 - `add_store_credit(customer_id, amount_minor)` -> updated credit balance.
+- `settle_store_credit(customer_id, amount_minor)` -> remaining credit balance;
+  settles a positive amount no greater than the current balance, and records
+  the settlement in the audit log and customer sync outbox.
 
 Unknown customer IDs raise `NotFoundError`; invalid data raises
 `ValidationError`.

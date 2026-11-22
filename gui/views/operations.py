@@ -105,6 +105,9 @@ class CustomerHistoryDialog(QDialog):
             add_credit = QPushButton(t("add_credit", "Add store credit"))
             add_credit.clicked.connect(self._add_credit)
             credit_row.addWidget(add_credit)
+            self.settle_credit = QPushButton(t("settle_credit", "Settle store credit"))
+            self.settle_credit.clicked.connect(self._settle_credit)
+            credit_row.addWidget(self.settle_credit)
             layout.addLayout(credit_row)
 
         self.error = QLabel()
@@ -133,6 +136,8 @@ class CustomerHistoryDialog(QDialog):
             f"{t('store_credit', 'Store credit')}: "
             f"{fmt(int(customer['credit_minor']), self.currency)}"
         )
+        if self.can_write:
+            self.settle_credit.setEnabled(int(customer["credit_minor"]) > 0)
         sales = record["sales"]
         self.table.setRowCount(len(sales))
         for row, sale in enumerate(sales):
@@ -148,6 +153,17 @@ class CustomerHistoryDialog(QDialog):
         try:
             amount_minor = to_minor(self.credit_amount.text())
             self.context.customers.add_store_credit(self.customer_id, amount_minor)
+            self.credit_amount.clear()
+            self.error.hide()
+            self._refresh()
+        except PosError as error:
+            self.error.setText(error.message)
+            self.error.show()
+
+    def _settle_credit(self) -> None:
+        try:
+            amount_minor = to_minor(self.credit_amount.text())
+            self.context.customers.settle_store_credit(self.customer_id, amount_minor)
             self.credit_amount.clear()
             self.error.hide()
             self._refresh()

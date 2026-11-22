@@ -1,5 +1,6 @@
 """Regression tests for backend workflows beyond the central stock invariant."""
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -77,6 +78,48 @@ class WorkflowTests(unittest.TestCase):
 
         self.assertIsNotNone(self.app.repository.get("customers", customer_id))
         self.assertEqual(self.app.repository.get("customers", customer_id)["credit_minor"], 500)
+
+    def test_customer_store_credit_can_be_partially_and_fully_settled(self) -> None:
+        customer_id = self.app.customers.register("Settlement Customer")
+        customer_uuid = self.app.repository.get("customers", customer_id)["uuid"]
+        self.app.customers.add_store_credit(customer_id, 1000)
+
+        self.assertEqual(self.app.customers.settle_store_credit(customer_id, 400), 600)
+        self.assertEqual(self.app.customers.settle_store_credit(customer_id, 600), 0)
+        self.assertEqual(
+            self.app.repository.get("customers", customer_id)["credit_minor"], 0
+        )
+        audit = self.app.repository.find("audit_log", {
+            "entity": "customer",
+            "entity_id": str(customer_id),
+            "action": "store_credit_settled",
+        })
+        self.assertEqual(len(audit), 2)
+        self.assertEqual(
+            json.loads(audit[-1]["details_json"]),
+            {"remaining_credit_minor": 0, "settled_minor": 600},
+        )
+        outbox = self.app.repository.find(
+            "sync_outbox", {"entity": "customers", "entity_uuid": customer_uuid}
+        )
+        self.assertEqual(outbox[-1]["op"], "update")
+        self.assertEqual(
+            json.loads(outbox[-1]["payload_json"]),
+            {"credit_minor": 0, "settled_minor": 600},
+        )
+
+    def test_customer_store_credit_settlement_rejects_invalid_amounts(self) -> None:
+        customer_id = self.app.customers.register("Settlement Customer")
+        self.app.customers.add_store_credit(customer_id, 500)
+
+        for amount_minor in (0, -1, 501):
+            with self.subTest(amount_minor=amount_minor):
+                with self.assertRaises(ValidationError):
+                    self.app.customers.settle_store_credit(customer_id, amount_minor)
+
+        self.assertEqual(
+            self.app.repository.get("customers", customer_id)["credit_minor"], 500
+        )
 
     def test_voucher_reduces_taxable_base_and_saved_tax(self) -> None:
         tax_id = self.app.settings.set_tax_rate("VAT", 1600, is_default=True)
