@@ -29,7 +29,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     }}
     QLabel#loginMark {{
         background: {palette.card};
-        color: {palette.primary};
+        color: {palette.primary_text or palette.primary};
         border-radius: {px(26)}px;
         font-size: {fpx("callout")}px;
         font-weight: {WEIGHT_SEMIBOLD};
@@ -69,8 +69,12 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         border: {px(1)}px solid {palette.border};
         border-radius: {px(4)}px;
     }}
-    QFrame[productCard="true"]:hover {{
-        border-color: #94A3B8; background: {palette.card};
+    QFrame[productCard="true"]:hover,
+    QFrame[productCard="true"][selected="true"] {{
+        border-color: {palette.primary}; background: {palette.card};
+    }}
+    QFrame[productCard="true"][selected="true"] {{
+        border-width: {px(2)}px;
     }}
     QLabel#sectionTitle {{ font-size: {fpx("section")}px; font-weight: {WEIGHT_SEMIBOLD}; }}
     QTabWidget::pane {{
@@ -85,7 +89,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         border-top-left-radius: {px(9)}px; border-top-right-radius: {px(9)}px;
     }}
     QTabBar::tab:selected {{
-        background: {palette.card}; color: {palette.primary};
+        background: {palette.card}; color: {palette.primary_text or palette.primary};
         border-color: {palette.border}; border-bottom-color: {palette.primary};
         font-weight: {WEIGHT_SEMIBOLD};
     }}
@@ -99,7 +103,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     QFrame[sidebar="true"] QLabel {{ color: {palette.on_primary}; }}
     QLabel#businessMark {{
         background: {palette.card}; color: {palette.primary};
-        border-radius: {px(9)}px; font-size: {fpx("callout")}px; font-weight: {WEIGHT_SEMIBOLD};
+        border-radius: {px(9)}px; font-size: {px(16)}px; font-weight: 600;
     }}
     QFrame[sidebar="true"] QPushButton {{
         background: transparent; color: {palette.on_primary};
@@ -113,7 +117,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         background: rgba(255, 255, 255, 30); border-color: rgba(255, 255, 255, 30);
     }}
     QFrame[sidebar="true"] QPushButton[active="true"] {{
-        background: {palette.card}; color: {palette.primary};
+        background: {palette.card}; color: {palette.primary_text or palette.primary};
         border-color: {palette.card};
     }}
     QPushButton {{
@@ -125,26 +129,26 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         min-height: {px(20)}px;
     }}
     QPushButton:hover {{ border-color: {palette.primary}; background: {palette.tint}; }}
-    QPushButton:pressed {{ background: {palette.pressed}; color: {palette.on_primary}; }}
+    QPushButton:pressed {{ background: {palette.pressed}; color: #FFFFFF; }}
     QPushButton:focus {{ border: {px(2)}px solid {palette.primary}; }}
     QPushButton:disabled {{ color: {palette.muted}; background: {palette.input_fill}; }}
-    QPushButton:checked {{ background: {palette.tint}; color: {palette.on_primary}; border-color: {palette.primary}; }}
+    QPushButton:checked {{ background: {palette.tint}; color: {palette.primary_text or palette.primary}; border-color: {palette.primary}; }}
     QPushButton[active="true"] {{
         background: {palette.card}; color: {palette.on_primary};
-        border-color: {palette.card}; font-weight: {WEIGHT_SEMIBOLD};
+        border-color: {palette.card}; font-weight: 600;
     }}
     QPushButton[primary="true"] {{
         background: {palette.primary}; color: {palette.on_primary};
         border-color: {palette.primary}; font-weight: {WEIGHT_SEMIBOLD};
     }}
     QPushButton[primary="true"]:hover {{ background: {palette.hover}; }}
-    QPushButton[primary="true"]:pressed {{ background: {palette.pressed}; }}
+    QPushButton[primary="true"]:pressed {{ background: {palette.pressed}; color: #FFFFFF; }}
     QPushButton[primary="true"]:disabled {{
         background: {palette.tint}; color: {palette.muted}; border-color: {palette.border};
     }}
     QPushButton[checkout="true"] {{
         background: {palette.checkout}; color: {palette.text};
-        border-color: {palette.checkout}; font-weight: {WEIGHT_SEMIBOLD};
+        border-color: {palette.checkout}; font-weight: 600;
     }}
     QPushButton[checkout="true"]:hover {{
         background: #22C55E; border-color: #22C55E; color: {palette.text};
@@ -165,10 +169,12 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         border-radius: {px(999)}px; padding: {px(7)}px {px(13)}px;
     }}
     QPushButton[categoryChip="true"]:hover {{
-        background: #CCFBF1; color: #0F766E; border-color: #99F6E4;
+        background: {palette.tint}; color: {palette.primary_text or palette.primary};
+        border-color: {palette.primary};
     }}
     QPushButton[categoryChip="true"]:checked {{
-        background: #CCFBF1; color: #0F766E; border-color: {palette.category};
+        background: {palette.primary}; color: {palette.on_primary};
+        border-color: {palette.primary};
     }}
     QToolButton {{
         background: {palette.card}; color: {palette.text};
@@ -176,7 +182,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         padding: {px(5)}px;
     }}
     QToolButton:hover {{ border-color: {palette.primary}; background: {palette.tint}; }}
-    QToolButton:pressed {{ background: {palette.pressed}; color: {palette.on_primary}; }}
+    QToolButton:pressed {{ background: {palette.pressed}; color: #FFFFFF; }}
     QToolButton:focus {{ border: {px(2)}px solid {palette.primary}; }}
     QToolButton:disabled {{ color: {palette.muted}; background: {palette.input_fill}; }}
     QToolButton[primary="true"] {{
@@ -184,6 +190,9 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         border-color: {palette.primary};
     }}
     QToolButton[primary="true"]:hover {{ background: {palette.hover}; }}
+    QToolButton[primary="true"]:pressed {{
+        background: {palette.pressed}; color: #FFFFFF;
+    }}
     QToolButton[primary="true"]:disabled {{
         background: {palette.input_fill}; color: {palette.muted};
         border-color: {palette.border};
@@ -289,7 +298,9 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         padding: {px(5)}px;
     }}
     QMenu::item {{ padding: {px(8)}px {px(22)}px; border-radius: {px(6)}px; }}
-    QMenu::item:selected {{ background: {palette.tint}; color: {palette.primary}; }}
+    QMenu::item:selected {{
+        background: {palette.tint}; color: {palette.primary_text or palette.primary};
+    }}
     QToolTip {{
         color: {palette.text}; background: {palette.card};
         border: {px(1)}px solid {palette.border}; padding: {px(5)}px;
@@ -299,10 +310,10 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     QLabel#productName, QLabel#cartItemName, QLabel#drawerTitle {{ font-weight: {WEIGHT_MEDIUM}; }}
     QLabel#productThumbnail {{
         background: #EFF6FF; color: {palette.primary};
-        border-radius: {px(10)}px; font-size: {fpx("thumbnail")}px; font-weight: {WEIGHT_SEMIBOLD};
+        border-radius: {px(10)}px; font-size: {px(26)}px; font-weight: 600;
     }}
     QLabel#productPrice, QLabel#cartLineTotal, QLabel#receiptTotal {{
-        font-weight: {WEIGHT_SEMIBOLD}; color: {palette.text};
+        font-weight: 600; color: {palette.text};
     }}
     QLabel#stockStatus {{ color: {palette.secondary}; font-size: {fpx("small")}px; }}
     QLabel#statusPill {{

@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 
 from backend.bootstrap import AppContext
 from backend.core.errors import PosError, PermissionDeniedError
-from backend.core.money import fmt, milli_to_qty, qty_to_milli, to_minor
+from backend.core.money import fmt, fmt_qty, qty_to_milli, to_minor
 from gui.dialogs.csv_import import CsvImportPreviewDialog
 from gui.i18n import t
 from gui.styles.tokens import px
@@ -113,7 +113,7 @@ class ItemDialog(QDialog):
             str(Decimal(int(item["cost_minor"])).scaleb(-2)) if item else "0"
         )
         self.low_stock = QLineEdit(
-            str(milli_to_qty(int(item["low_stock_milli"]))) if item else "0"
+            fmt_qty(int(item["low_stock_milli"])) if item else "0"
         )
         self.opening_stock = QLineEdit("0")
         self.tax_inclusive = QCheckBox(t("tax_inclusive", "Tax inclusive"))
@@ -505,7 +505,7 @@ class ProductsView(QWidget):
             stock = (
                 t("available", "Available")
                 if item_type in {"service", "non_inventory"}
-                else f"{milli_to_qty(stock_milli):g}"
+                else fmt_qty(stock_milli)
             )
             values = (
                 str(item["name"]), item_type, category or t("uncategorized", "Uncategorized"),

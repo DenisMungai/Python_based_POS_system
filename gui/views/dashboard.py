@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 )
 
 from backend.bootstrap import AppContext
-from backend.core.money import fmt, milli_to_qty
+from backend.core.money import fmt, fmt_qty
 from gui.i18n import t
 from gui.styles.tokens import px
 from gui.views.current_sale import CurrentSaleView
@@ -99,7 +99,7 @@ class DashboardView(QWidget):
             line_layout.setContentsMargins(0, px(3), 0, px(3))
             line_layout.setColumnStretch(0, 1)
             name = QLabel(str(row["name"]))
-            quantity = QLabel(f"{milli_to_qty(int(row['stock_milli'])):g} {row.get('unit') or ''}".strip())
+            quantity = QLabel(f"{fmt_qty(int(row['stock_milli']))} {row.get('unit') or ''}".strip())
             line_layout.addWidget(name, 0, 0)
             line_layout.addWidget(quantity, 0, 1)
             line_layout.addWidget(StatusPill(t("low", "Low")), 0, 2)

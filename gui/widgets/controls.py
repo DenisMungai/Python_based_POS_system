@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QPushButton, QToolButton, QVBoxLayout, QWidget, QHeaderView,
 )
 
-from backend.core.money import fmt, milli_to_qty
+from backend.core.money import fmt, fmt_qty
 from backend.services.support import ReceiptService
 from gui.icons import load_icon
 from gui.styles.tokens import DEFAULT_PALETTE, Palette, px
@@ -175,6 +175,7 @@ class ProductCard(QFrame):
         self.item_id = int(item["id"])
         self.setProperty("card", True)
         self.setProperty("productCard", True)
+        self.setProperty("selected", False)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFixedHeight(px(220))
         layout = QVBoxLayout(self)
@@ -258,8 +259,9 @@ class QuantityStepper(QWidget):
         self.increase_button = QToolButton()
         self.decrease_button.setToolTip(t("decrease_quantity", "Decrease quantity"))
         self.increase_button.setToolTip(t("increase_quantity", "Increase quantity"))
-        self.decrease_button.setIcon(load_icon("minus", palette.secondary, 14))
-        self.increase_button.setIcon(load_icon("plus", palette.secondary, 14))
+        icon_color = palette.primary
+        self.decrease_button.setIcon(load_icon("minus", icon_color, 14))
+        self.increase_button.setIcon(load_icon("plus", icon_color, 14))
         self.value_label = QLabel()
         self.value_label.setMinimumWidth(px(42))
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -286,8 +288,7 @@ class QuantityStepper(QWidget):
         self.quantity_changed.emit(quantity_milli)
 
     def _refresh(self) -> None:
-        quantity = milli_to_qty(self._quantity_milli).normalize()
-        self.value_label.setText(f"{quantity:f}")
+        self.value_label.setText(fmt_qty(self._quantity_milli))
 
 
 class CartLineItem(QFrame):
@@ -455,9 +456,9 @@ class ReceiptWidget(QFrame):
             name.setWordWrap(True)
             layout.addWidget(name)
             detail = QHBoxLayout()
-            quantity = milli_to_qty(int(item["quantity_milli"])).normalize()
+            quantity = fmt_qty(int(item["quantity_milli"]))
             unit_price = fmt(int(item["unit_price_minor"]), receipt["currency"])
-            detail.addWidget(QLabel(f"{quantity:f} x {unit_price}"), 1)
+            detail.addWidget(QLabel(f"{quantity} x {unit_price}"), 1)
             detail.addWidget(QLabel(fmt(int(item["line_total_minor"]), receipt["currency"])))
             layout.addLayout(detail)
         separator = QFrame()

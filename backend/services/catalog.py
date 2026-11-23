@@ -671,6 +671,31 @@ class CustomerService:
                 "customers", customer["uuid"], "update", fields, timestamp()
             )
 
+    def delete(self, customer_id: int) -> None:
+        """Delete customer details without deleting their sales or held carts."""
+        if self.auth and self.auth.enforcement_enabled:
+            self.auth.require_permission("customers.write")
+        now = timestamp()
+        with self.repo.database.transaction():
+            customer = self.repo.get("customers", customer_id)
+            if not customer:
+                raise NotFoundError("Customer was not found.")
+            if int(customer["credit_minor"]) != 0:
+                raise ValidationError("Settle the customer's store credit before deleting them.")
+            self.repo.delete_customer(customer_id)
+            self.repo.insert_outbox(
+                "customers", customer["uuid"], "delete", {"id": customer_id}, now
+            )
+            user = self.auth.current_user if self.auth else None
+            self.repo.insert("audit_log", {
+                "user_id": user.id if user else None,
+                "action": "delete",
+                "entity": "customer",
+                "entity_id": str(customer_id),
+                "details_json": json.dumps({"uuid": customer["uuid"]}, sort_keys=True),
+                "created_at": now,
+            })
+
     def search(self, query: str = "", limit: int = 100) -> list[dict[str, Any]]:
         """Search customer names, phone numbers, and email addresses."""
         if self.auth and self.auth.enforcement_enabled:
@@ -705,6 +730,40 @@ class CustomerService:
                 "customers", customer["uuid"], "update", {"credit_minor": balance}, now
             )
         return balance
+
+    def settle_store_credit(self, customer_id: int, amount_minor: int) -> int:
+        """Settle part or all of a customer's store-credit balance."""
+        if self.auth and self.auth.enforcement_enabled:
+            self.auth.require_permission("customers.write")
+        if isinstance(amount_minor, bool) or not isinstance(amount_minor, int) or amount_minor <= 0:
+            raise ValidationError("Settlement amount must be a positive number of minor units.")
+        now = timestamp()
+        with self.repo.database.transaction():
+            customer = self.repo.get("customers", customer_id)
+            if not customer:
+                raise NotFoundError("Customer was not found.")
+            balance = int(customer["credit_minor"])
+            if amount_minor > balance:
+                raise ValidationError("Settlement cannot exceed the customer's store-credit balance.")
+            remaining = balance - amount_minor
+            self.repo.update("customers", customer_id, {"credit_minor": remaining})
+            self.repo.insert_outbox(
+                "customers", customer["uuid"], "update",
+                {"credit_minor": remaining, "settled_minor": amount_minor}, now,
+            )
+            user = self.auth.current_user if self.auth else None
+            self.repo.insert("audit_log", {
+                "user_id": user.id if user else None,
+                "action": "store_credit_settled",
+                "entity": "customer",
+                "entity_id": str(customer_id),
+                "details_json": json.dumps({
+                    "settled_minor": amount_minor,
+                    "remaining_credit_minor": remaining,
+                }, sort_keys=True),
+                "created_at": now,
+            })
+        return remaining
 
 
 class DiscountService:

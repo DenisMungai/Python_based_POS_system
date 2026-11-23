@@ -44,6 +44,7 @@ class Palette:
     pressed: str
     tint: str
     on_primary: str
+    primary_text: str | None = None
     canvas: str = "#F8FAFC"
     card: str = "#FFFFFF"
     border: str = "#E2E8F0"
@@ -57,8 +58,7 @@ class Palette:
     scrollbar: str = "#CBD5E1"
     danger_tint: str = "#FEF2F2"
     warning_tint: str = "#FFFBEB"
-    checkout: str = "#16A34A"
-    category: str = "#0D9488"
+    checkout: str = "#15A046"
     warning_accent: str = "#D97706"
 
 
@@ -76,21 +76,23 @@ _BASE = {
     "scrollbar": "#CBD5E1",
     "danger_tint": "#FEF2F2",
     "warning_tint": "#FFFBEB",
-    "checkout": "#16A34A",
-    "category": "#0D9488",
+    "checkout": "#15A046",
     "warning_accent": "#D97706",
 }
 
 PALETTES: dict[str, Palette] = {
     "Navy": Palette("Navy", "#1D4ED8", "#1E40AF", "#1E3A8A", "#EFF6FF", "#FFFFFF", **_BASE),
-    "Emerald": Palette("Emerald", "#15803D", "#166534", "#14532D", "#ECFDF5", "#FFFFFF", **_BASE),
+    "Emerald": Palette(
+        "Emerald", "#15A046", "#19A84B", "#0F7032", "#E9F7EE", "#071A0D",
+        primary_text="#116B35", **_BASE,
+    ),
     "Teal": Palette("Teal", "#0F766E", "#115E59", "#134E4A", "#F0FDFA", "#FFFFFF", **_BASE),
     "Amber": Palette("Amber", "#B45309", "#92400E", "#78350F", "#FFFBEB", "#FFFFFF", **_BASE),
     "Red": Palette("Red", "#DC2626", "#B91C1C", "#991B1B", "#FEF2F2", "#FFFFFF", **_BASE),
     "Slate": Palette("Slate", "#1E293B", "#334155", "#0F172A", "#F1F5F9", "#FFFFFF", **_BASE),
 }
 
-DEFAULT_PALETTE = PALETTES["Navy"]
+DEFAULT_PALETTE = PALETTES["Emerald"]
 
 __all__ = [
     "DEFAULT_PALETTE", "PALETTES", "Palette", "UI_SCALE",

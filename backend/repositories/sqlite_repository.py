@@ -151,6 +151,23 @@ class SqliteRepository:
         key_name = PRIMARY_KEYS.get(table, "id")
         self.database.connection.execute(f"DELETE FROM {table} WHERE {key_name}=?", (key,))
 
+    def delete_customer(self, customer_id: int) -> None:
+        """Remove customer details while preserving sales and held carts."""
+        try:
+            self.database.connection.execute(
+                "UPDATE sales SET customer_id=NULL WHERE customer_id=?", (customer_id,)
+            )
+            self.database.connection.execute(
+                "UPDATE held_sales SET customer_id=NULL WHERE customer_id=?", (customer_id,)
+            )
+            cursor = self.database.connection.execute(
+                "DELETE FROM customers WHERE id=?", (customer_id,)
+            )
+            if cursor.rowcount == 0:
+                raise NotFoundError("Customer was not found.")
+        except sqlite3.Error as error:
+            raise DatabaseError("Could not delete the customer.", reason=str(error)) from error
+
     def insert_outbox(self, entity: str, entity_uuid: str, operation: str, payload: Mapping[str, Any], created_at: str) -> None:
         """Append a sync-ready record; no network code consumes it."""
         self.insert("sync_outbox", {

@@ -67,6 +67,7 @@ class SalesService:
             line_total = gross if item["tax_inclusive"] else gross + tax
             prepared.append({
                 "item_id": item_id, "name": item["name"], "item_type": item["item_type"],
+                "image_path": str(item.get("image_path") or ""),
                 "unit_price_minor": item["price_minor"], "quantity_milli": quantity,
                 "tax_rate_basis_points": rate, "tax_inclusive": bool(item["tax_inclusive"]),
                 "line_subtotal_minor": base, "line_tax_minor": tax, "line_total_minor": line_total,

@@ -12,6 +12,11 @@ integer thousandths (`quantity_milli`). Timestamps persisted by services are
 UTC ISO-8601 strings. SQL is restricted to `backend/repositories/` and
 `backend/core/migrations.py`, and values are bound parameters.
 
+For display, `backend.core.money.fmt_qty(quantity_milli)` returns a decimal
+string without insignificant trailing zeros. For example, `2000` displays as
+`"2"` and `1250` as `"1.25"`. This is formatting only: stored quantities remain
+integer thousandths, and meaningful fractional digits are preserved.
+
 Expected business errors derive from `PosError`: `ValidationError`,
 `NotFoundError`, `DuplicateError`, `InsufficientStockError`,
 `PermissionDeniedError`, `AuthenticationError`, `AccountLockedError`,
@@ -120,9 +125,15 @@ are emitted after commit.
 - `register(name, phone="", email="", notes="")` -> customer ID.
 - `update(customer_id, **fields)` -> `None`; fields are `name`, `phone`,
   `email`, and `notes`.
+- `delete(customer_id)` -> `None`; removes customer details, detaches retained
+  sales and held carts, and writes audit/outbox records. Customers with
+  outstanding store credit cannot be deleted.
 - `search(query="", limit=100)` -> customer rows.
 - `get_with_history(customer_id)` -> customer and sale rows.
 - `add_store_credit(customer_id, amount_minor)` -> updated credit balance.
+- `settle_store_credit(customer_id, amount_minor)` -> remaining credit balance;
+  settles a positive amount no greater than the current balance, and records
+  the settlement in the audit log and customer sync outbox.
 
 Unknown customer IDs raise `NotFoundError`; invalid data raises
 `ValidationError`.
@@ -143,7 +154,8 @@ raise `VoucherError`.
 ### SalesService
 
 - `quote_sale(lines, voucher_code=None, at=None)` -> current server-calculated
-  lines, subtotal, tax, discount, and total without mutating state.
+  lines, subtotal, tax, discount, and total without mutating state. Quoted
+  lines include the local `image_path` when an item image is configured.
 - `process_sale(lines, payments, customer_id=None, voucher_code=None, note="",
   user_id=None, at=None)` -> `SaleResult`. Each line requires `item_id` and
   either `quantity_milli` or `quantity`; each payment requires `method` and

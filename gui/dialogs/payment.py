@@ -3,13 +3,14 @@
 from typing import Any
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtGui import QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
-    QComboBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget,
+    QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QScrollArea, QVBoxLayout, QWidget,
 )
 
 from backend.core.errors import PosError
-from backend.core.money import fmt, from_minor, to_minor
+from backend.core.money import fmt, fmt_qty, from_minor, to_minor
 from backend.models.records import SaleResult
 from backend.services.sales import SalesService
 from gui.styles.tokens import px
@@ -52,6 +53,7 @@ class PaymentDialog(QDialog):
         title = QLabel(t("payment_method", "Payment method"))
         title.setObjectName("drawerTitle")
         layout.addWidget(title)
+        self._add_sale_items(layout)
         total_line = QHBoxLayout()
         total_line.addWidget(QLabel(t("order_total", "Order total")), 1)
         self.total_label = QLabel(fmt(int(quote["total_minor"]), currency))
@@ -89,6 +91,55 @@ class PaymentDialog(QDialog):
         layout.addLayout(actions)
         self._update_reference_visibility(self.method.currentText())
         QShortcut(QKeySequence("Ctrl+Return"), self).activated.connect(self._complete)
+
+    def _add_sale_items(self, layout: QVBoxLayout) -> None:
+        """Show item thumbnails and amounts alongside the payment controls."""
+        heading = QLabel(t("sale_items", "Items in this sale"))
+        heading.setObjectName("sectionTitle")
+        layout.addWidget(heading)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setMaximumHeight(px(190))
+        page = QWidget()
+        rows = QVBoxLayout(page)
+        rows.setContentsMargins(0, 0, 0, 0)
+        rows.setSpacing(px(6))
+        for line in self.quote["lines"]:
+            row = QFrame()
+            row.setProperty("card", True)
+            row_layout = QHBoxLayout(row)
+            row_layout.setContentsMargins(px(8), px(6), px(8), px(6))
+            row_layout.setSpacing(px(9))
+            thumbnail = QLabel()
+            thumbnail.setObjectName("productThumbnail")
+            thumbnail.setFixedSize(px(48), px(48))
+            thumbnail.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            image_path = str(line.get("image_path") or "")
+            image = QPixmap(image_path) if image_path else QPixmap()
+            if not image.isNull():
+                thumbnail.setPixmap(image.scaled(
+                    px(48), px(48), Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                ))
+            else:
+                thumbnail.setText(str(line["name"])[:1].upper())
+            detail = QVBoxLayout()
+            name = QLabel(str(line["name"]))
+            name.setObjectName("productName")
+            name.setWordWrap(True)
+            detail.addWidget(name)
+            quantity = fmt_qty(int(line["quantity_milli"]))
+            unit_price = fmt(int(line["unit_price_minor"]), self.currency)
+            detail.addWidget(QLabel(f"{quantity} x {unit_price}"))
+            total = QLabel(fmt(int(line["line_total_minor"]), self.currency))
+            total.setObjectName("cartLineTotal")
+            row_layout.addWidget(thumbnail)
+            row_layout.addLayout(detail, 1)
+            row_layout.addWidget(total)
+            rows.addWidget(row)
+        rows.addStretch(1)
+        scroll.setWidget(page)
+        layout.addWidget(scroll)
 
     def _update_reference_visibility(self, method: str) -> None:
         """Show the reference field only for M-Pesa payments."""

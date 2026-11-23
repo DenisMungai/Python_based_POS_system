@@ -186,8 +186,10 @@ class CurrentSaleView(QWidget):
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.products_grid.addWidget(empty, 0, 0)
             return
+        selected_ids = {line.item_id for line in self.cart.lines()}
         for index, item in enumerate(items):
             card = ProductCard(item, self.currency)
+            card.setProperty("selected", card.item_id in selected_ids)
             card.add_requested.connect(self._add_item)
             self._product_cards.append(card)
         self._reflow_products()
@@ -291,6 +293,14 @@ class CurrentSaleView(QWidget):
 
     def _render_cart(self) -> None:
         self._clear_layout(self.cart_lines_layout)
+        selected_ids = {line.item_id for line in self.cart.lines()}
+        for card in self._product_cards:
+            selected = card.item_id in selected_ids
+            if card.property("selected") != selected:
+                card.setProperty("selected", selected)
+                card.style().unpolish(card)
+                card.style().polish(card)
+                card.update()
         has_lines = self.quote is not None
         if has_lines and self.quote is not None:
             for line in self.quote["lines"]:
