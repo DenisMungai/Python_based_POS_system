@@ -1,6 +1,6 @@
 """Reusable service-oriented Qt widgets for the POS interface."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer, Signal
@@ -72,6 +72,38 @@ def fit_table_action_column(table: Any, column: int) -> None:
         table.setColumnWidth(
             column, max(table.columnWidth(column), content_width + px(36))
         )
+    fit_table_to_viewport(table, protected_columns=(column,))
+
+
+def fit_table_to_viewport(table: Any, protected_columns: Sequence[int] = ()) -> None:
+    """Keep every table column visible, whatever font metrics are in use.
+
+    Action columns hold real buttons, so their width is preserved. The other
+    columns are scaled to the viewport; long text is elided by Qt instead of
+    forcing a horizontal scrollbar.
+    """
+    header = table.horizontalHeader()
+    protected = set(protected_columns)
+    flexible = [
+        column for column in range(table.columnCount()) if column not in protected
+    ]
+    if not flexible:
+        return
+    reserved = sum(table.columnWidth(column) for column in protected)
+    available = max(px(120), table.viewport().width() - reserved)
+    widths = [table.columnWidth(column) for column in flexible]
+    total = sum(widths)
+    if total <= 0:
+        return
+    if total > available:
+        minimum = px(56)
+        widths = [max(minimum, int(width * available / total)) for width in widths]
+    else:
+        extra = (available - total) // len(flexible)
+        widths = [width + extra for width in widths]
+    for column, width in zip(flexible, widths):
+        header.setSectionResizeMode(column, QHeaderView.ResizeMode.Interactive)
+        table.setColumnWidth(column, width)
 
 
 class SidebarNavItem(QPushButton):

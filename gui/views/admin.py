@@ -17,6 +17,7 @@ from backend.bootstrap import AppContext
 from backend.core.errors import PosError
 from backend.core.money import fmt, milli_to_qty
 from gui.i18n import t
+from gui.styles.fonts import fpx
 from gui.styles.qss import build_stylesheet
 from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, px
 from gui.widgets import (
@@ -61,7 +62,7 @@ class SalesSeriesChart(QWidget):
             )
         painter.setPen(QColor("#64748B"))
         font = self.font()
-        font.setPixelSize(px(10))
+        font.setPixelSize(fpx("caption"))
         painter.setFont(font)
         first = str(self.series[0].get("day", ""))
         last = str(self.series[-1].get("day", ""))

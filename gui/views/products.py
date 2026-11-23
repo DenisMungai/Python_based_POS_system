@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QResizeEvent
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
@@ -19,7 +19,7 @@ from gui.i18n import t
 from gui.styles.tokens import px
 from gui.widgets import (
     Toast, clear_table_widgets, configure_table, fit_table_action_column,
-    set_table_action_cell,
+    fit_table_to_viewport, set_table_action_cell,
 )
 
 
@@ -398,6 +398,11 @@ class ProductsView(QWidget):
         layout.addWidget(self.table, 1)
         self._load_categories()
         self.refresh()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """Rebalance catalogue columns when the window or font size changes."""
+        super().resizeEvent(event)
+        fit_table_to_viewport(self.table, protected_columns=(6,))
 
     def focus_search(self) -> None:
         self.search.setFocus()

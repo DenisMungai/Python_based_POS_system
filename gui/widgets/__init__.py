@@ -4,7 +4,7 @@ from gui.widgets.controls import (
     CartLineItem, CategoryChip, KpiCard, ModuleToggleRow, ProductCard,
     QuantityStepper, ReceiptWidget, SearchField, SideDrawer, SidebarNavItem,
     StatusPill, Toast, apply_card_elevation, clear_table_widgets, configure_table,
-    fit_table_action_column, set_table_action_cell,
+    fit_table_action_column, fit_table_to_viewport, set_table_action_cell,
 )
 
 __all__ = [
@@ -12,5 +12,5 @@ __all__ = [
     "QuantityStepper", "ReceiptWidget", "SearchField", "SideDrawer",
     "SidebarNavItem", "StatusPill", "Toast", "apply_card_elevation",
     "clear_table_widgets", "configure_table", "fit_table_action_column",
-    "set_table_action_cell",
+    "fit_table_to_viewport", "set_table_action_cell",
 ]

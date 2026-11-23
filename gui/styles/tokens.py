@@ -7,9 +7,21 @@ UI_SCALE = 0.9
 _DPI_SCALE = 1.0
 
 
-def px(value: int | float) -> int:
-    """Scale design pixels for the configured root zoom and display DPI."""
-    scaled = value * UI_SCALE * _DPI_SCALE
+def px(
+    value: int | float,
+    *,
+    scale: float | None = None,
+    compensate_dpi: bool = True,
+) -> int:
+    """Scale design pixels for the configured root zoom and display DPI.
+
+    Font sizes pass ``scale=1.0`` and ``compensate_dpi=False`` so the numbers
+    in FONT_SIZES are literal screen pixels. Every other UI value keeps the
+    shared UI_SCALE and high-DPI compensation.
+    """
+    factor = UI_SCALE if scale is None else scale
+    dpi = _DPI_SCALE if compensate_dpi else 1.0
+    scaled = value * factor * dpi
     result = round(scaled)
     return max(1, result) if value > 0 else result
 
