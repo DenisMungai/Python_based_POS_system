@@ -3,7 +3,7 @@
 from typing import Any
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QKeySequence, QPixmap, QShortcut
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QComboBox, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QScrollArea, QVBoxLayout, QWidget,
@@ -13,6 +13,7 @@ from backend.core.errors import PosError
 from backend.core.money import fmt, fmt_qty, from_minor, to_minor
 from backend.models.records import SaleResult
 from backend.services.sales import SalesService
+from gui.widgets.controls import make_thumbnail_label
 from gui.styles.tokens import px
 from gui.i18n import t
 
@@ -110,19 +111,10 @@ class PaymentDialog(QDialog):
             row_layout = QHBoxLayout(row)
             row_layout.setContentsMargins(px(8), px(6), px(8), px(6))
             row_layout.setSpacing(px(9))
-            thumbnail = QLabel()
-            thumbnail.setObjectName("productThumbnail")
-            thumbnail.setFixedSize(px(48), px(48))
-            thumbnail.setAlignment(Qt.AlignmentFlag.AlignCenter)
             image_path = str(line.get("image_path") or "")
-            image = QPixmap(image_path) if image_path else QPixmap()
-            if not image.isNull():
-                thumbnail.setPixmap(image.scaled(
-                    px(48), px(48), Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
-                ))
-            else:
-                thumbnail.setText(str(line["name"])[:1].upper())
+            thumbnail = make_thumbnail_label(
+                image_path, str(line["name"]), 48, parent=row,
+            )
             detail = QVBoxLayout()
             name = QLabel(str(line["name"]))
             name.setObjectName("productName")

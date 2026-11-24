@@ -4,11 +4,12 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
+    QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout,
+    QHeaderView, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
+    QVBoxLayout, QWidget,
 )
 
 from backend.bootstrap import AppContext
@@ -18,8 +19,8 @@ from gui.dialogs.csv_import import CsvImportPreviewDialog
 from gui.i18n import t
 from gui.styles.tokens import px
 from gui.widgets import (
-    Toast, clear_table_widgets, configure_table, fit_table_action_column,
-    set_table_action_cell,
+    Toast, clear_table_widgets, configure_table, cover_pixmap, fit_table_action_column,
+    load_product_pixmap, make_thumbnail_label, set_table_action_cell,
 )
 
 
@@ -226,13 +227,12 @@ class ItemDialog(QDialog):
         self._show_image_preview(self.image_source)
 
     def _show_image_preview(self, image_path: Path) -> None:
-        image = QPixmap(str(image_path))
+        image = load_product_pixmap(image_path)
         if image.isNull():
             self.image_preview.setText(t("image_unavailable", "Unavailable"))
             return
-        self.image_preview.setPixmap(image.scaled(
-            self.image_preview.size(), Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
+        self.image_preview.setPixmap(cover_pixmap(
+            image, self.image_preview.width(), self.image_preview.height(),
         ))
 
 
@@ -385,12 +385,17 @@ class ProductsView(QWidget):
 
         self.table = QTableWidget(0, 7)
         configure_table(self.table)
+        self.table.setIconSize(QSize(px(44), px(44)))
         self.table.setObjectName("catalogueTable")
         self.table.setHorizontalHeaderLabels([
             t("name", "Name"), t("item_type", "Type"), t("category", "Category"),
             t("barcode", "Barcode"), t("price", "Price"), t("stock", "Stock"),
             t("actions", "Actions"),
         ])
+        self.table.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeMode.Stretch,
+        )
+        self.table.setColumnWidth(0, px(200))
         self.table.horizontalHeader().setStretchLastSection(False)
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -508,7 +513,17 @@ class ProductsView(QWidget):
                 stock,
             )
             for column, value in enumerate(values):
-                self.table.setItem(row_index, column, QTableWidgetItem(value))
+                if column == 0:
+                    name_item = QTableWidgetItem(value)
+                    thumbnail = make_thumbnail_label(
+                        str(item.get("image_path") or ""), value, 44,
+                        parent=self.table,
+                    )
+                    name_item.setIcon(QIcon(thumbnail.grab()))
+                    thumbnail.deleteLater()
+                    self.table.setItem(row_index, column, name_item)
+                else:
+                    self.table.setItem(row_index, column, QTableWidgetItem(value))
 
             actions = QWidget()
             actions_layout = QHBoxLayout(actions)
@@ -530,4 +545,5 @@ class ProductsView(QWidget):
             set_table_action_cell(self.table, row_index, 6, actions)
             self.table.setRowHeight(row_index, px(68))
         self.table.resizeColumnsToContents()
+        self.table.setColumnWidth(0, max(self.table.columnWidth(0), px(200)))
         fit_table_action_column(self.table, 6)

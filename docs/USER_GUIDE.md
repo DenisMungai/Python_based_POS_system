@@ -26,6 +26,8 @@
 
 - **Products**: add, edit, archive, categorize, search, adjust stock, and
   attach local product images. Images appear on the sale catalogue cards.
+  For the best fit, use 4:5 portrait photos (for example 1200x1500) with the
+  subject centred and some margin, so the cover crop trims background only.
   Export the active catalogue to CSV or preview a CSV before importing it.
 - **Customers**: register and update customers, review their purchase history,
   add store credit, and import/export customer CSV files.

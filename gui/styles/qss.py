@@ -68,13 +68,13 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         border: {px(1)}px solid {palette.border};
         border-radius: {px(4)}px;
     }}
-    QFrame[productCard="true"]:hover,
-    QFrame[productCard="true"][selected="true"] {{
-        border-color: {palette.primary}; background: {palette.card};
+    QFrame[productCard="true"] {{
+        background: {palette.card};
+        border: {px(1)}px solid {palette.border};
+        border-radius: {px(12)}px;
     }}
-    QFrame[productCard="true"][selected="true"] {{
-        border-width: {px(2)}px;
-    }}
+    QFrame[productCard="true"]:hover {{ border-color: {palette.primary}; }}
+    QFrame[productCard="true"][selected="true"] {{ border-color: {palette.success}; }}
     QLabel#sectionTitle {{ font-size: {px(15)}px; font-weight: 600; }}
     QTabWidget::pane {{
         background: transparent; border: none; top: {px(-1)}px;
@@ -309,7 +309,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     QLabel#productName, QLabel#cartItemName, QLabel#drawerTitle {{ font-weight: 500; }}
     QLabel#productThumbnail {{
         background: {palette.tint}; color: {palette.primary_text or palette.primary};
-        border-radius: {px(10)}px; font-size: {px(26)}px; font-weight: 600;
+        font-size: {px(38)}px; font-weight: 600;
     }}
     QLabel#productPrice, QLabel#cartLineTotal, QLabel#receiptTotal {{
         font-weight: 600; color: {palette.primary_text or palette.text};

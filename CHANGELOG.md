@@ -19,8 +19,10 @@
   checkout smoke test; release acceptance remains open pending verification
   on the intended local receipt printer.
 - Fixed catalogue cards to refresh after item, image, stock, and category
-  changes; added an image preview while editing products and prevented
-  thumbnails from being cropped unexpectedly.
+  changes and added an image preview while editing products.
+- Reworked the sale catalogue into responsive 4:5 cover-cropped tiles with
+  cached, EXIF-aware images, rounded image edges, and matching square checkout
+  thumbnails.
 - Removed stale catalogue cards and table actions immediately during refresh,
   preventing old widgets from painting over current rows or search results.
 - Improved operational page headings and table action-row spacing to prevent

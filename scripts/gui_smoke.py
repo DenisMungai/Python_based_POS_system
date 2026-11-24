@@ -11,7 +11,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from PySide6.QtCore import QPoint, Qt, QTimer
-from PySide6.QtGui import QColor, QImage
+from PySide6.QtGui import QColor, QImage, QPainter, QPixmap
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QFrame, QLabel, QPushButton, QToolButton
 
@@ -26,7 +26,7 @@ from gui.dialogs.setup import SetupDialog
 from gui.shell import AppWindow
 from gui.styles.tokens import DEFAULT_PALETTE, px
 from gui.views.current_sale import CurrentSaleView
-from gui.widgets import ProductCard, QuantityStepper, ReceiptWidget
+from gui.widgets import PRODUCT_TILE_RATIO, ProductCard, QuantityStepper, ReceiptWidget, cover_pixmap
 
 
 def assert_table_actions_fit(table, row: int, column: int) -> None:
@@ -43,6 +43,52 @@ def assert_table_actions_fit(table, row: int, column: int) -> None:
     for button in actions.findChildren(QPushButton):
         if button.isVisible() and button.width() < button.sizeHint().width():
             raise RuntimeError(f"The {button.text()} action label is clipped.")
+
+
+def assert_cover_pixmap_cases() -> None:
+    """Verify cover crops preserve source geometry and return opaque exact-size tiles."""
+    for source_width, source_height in ((200, 100), (100, 200), (160, 200)):
+        image = QImage(source_width, source_height, QImage.Format.Format_ARGB32)
+        image.fill(QColor("#263238"))
+        painter = QPainter(image)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor("#FFFFFF"))
+        painter.drawEllipse(
+            source_width // 2 - 10, source_height // 2 - 10, 20, 20,
+        )
+        painter.end()
+
+        result = cover_pixmap(QPixmap.fromImage(image), 120, 150)
+        logical_size = result.deviceIndependentSize()
+        if result.isNull() or logical_size.width() != 120 or logical_size.height() != 150:
+            raise RuntimeError("Cover rendering did not return the exact logical tile size.")
+        rendered = result.toImage()
+        circle_points = [
+            (x, y)
+            for y in range(rendered.height())
+            for x in range(rendered.width())
+            if rendered.pixelColor(x, y).red() > 220
+            and rendered.pixelColor(x, y).green() > 220
+            and rendered.pixelColor(x, y).blue() > 220
+        ]
+        if not circle_points:
+            raise RuntimeError("Cover rendering lost the centred source detail.")
+        circle_width = max(x for x, _ in circle_points) - min(x for x, _ in circle_points) + 1
+        circle_height = max(y for _, y in circle_points) - min(y for _, y in circle_points) + 1
+        scale = max(120 / source_width, 150 / source_height)
+        expected_diameter = 20 * scale * result.devicePixelRatio()
+        if (
+            abs(circle_width - circle_height) > 2
+            or abs(circle_width - expected_diameter) > 2
+        ):
+            raise RuntimeError("Cover rendering stretched the source image.")
+        if any(
+            rendered.pixelColor(x, y).alpha() != 255
+            for y in range(rendered.height())
+            for x in range(rendered.width())
+        ):
+            raise RuntimeError("Cover rendering left transparent pixels in the tile.")
 
 
 def main() -> int:
@@ -71,6 +117,7 @@ def main() -> int:
             )
             if px(232) != expected_sidebar_width:
                 raise RuntimeError("GUI dimensions are not compensating for display DPI.")
+            assert_cover_pixmap_cases()
 
             setup = SetupDialog(context)
             setup.show()
@@ -223,7 +270,7 @@ def main() -> int:
             application.processEvents()
             image_source = Path(directory) / "smoke-laptop.png"
             sample_image = QImage(32, 32, QImage.Format.Format_RGB32)
-            sample_image.fill(QColor("#0F766E"))
+            sample_image.fill(QColor(DEFAULT_PALETTE.primary))
             if not sample_image.save(str(image_source)):
                 raise RuntimeError("Could not create the local product-image test fixture.")
             laptop = context.catalog.search_items("Laptop", limit=1)[0]
@@ -240,8 +287,29 @@ def main() -> int:
             if laptop_card is None:
                 raise RuntimeError("The refreshed catalogue did not include the imaged Laptop.")
             thumbnail = laptop_card.findChild(QLabel, "productThumbnail")
-            if thumbnail is None or thumbnail.pixmap() is None or thumbnail.pixmap().isNull():
-                raise RuntimeError("The saved product image was not rendered on its sale card.")
+            thumbnail_pixmap = thumbnail.pixmap() if thumbnail is not None else None
+            tile_size = thumbnail_pixmap.deviceIndependentSize() if thumbnail_pixmap else None
+            if (
+                thumbnail_pixmap is None or thumbnail_pixmap.isNull()
+                or thumbnail.hasScaledContents()
+                or tile_size.width() != thumbnail.width()
+                or tile_size.height() != thumbnail.height()
+                or abs(tile_size.width() / tile_size.height() - PRODUCT_TILE_RATIO) > 1 / tile_size.height()
+            ):
+                raise RuntimeError("The saved product image does not fill a uniform 4:5 tile.")
+            tile_image = thumbnail_pixmap.toImage()
+            if any(
+                tile_image.pixelColor(x, y).alpha() != 255
+                for y in range(tile_image.height())
+                for x in range(tile_image.width())
+            ):
+                raise RuntimeError("The product tile contains transparent image bands.")
+            if any(
+                tile_image.pixelColor(x, y) != QColor(DEFAULT_PALETTE.primary)
+                for y in range(tile_image.height())
+                for x in range(tile_image.width())
+            ):
+                raise RuntimeError("The solid image fixture was not rendered as a solid fill.")
             add_button = cards[0].findChild(QToolButton)
             if add_button is None:
                 raise RuntimeError("The catalogue card has no accessible add button.")

@@ -68,12 +68,12 @@ class CurrentSaleView(QWidget):
         catalogue.addLayout(self.category_row)
         self.products_scroll = QScrollArea()
         self.products_scroll.setWidgetResizable(True)
-        self.products_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.products_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.products_page = QWidget()
         self.products_grid = QGridLayout(self.products_page)
         self.products_grid.setContentsMargins(0, 0, 0, 0)
-        self.products_grid.setSpacing(px(12))
-        self.products_grid.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self.products_grid.setSpacing(px(8))
+        self.products_grid.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.products_scroll.setWidget(self.products_page)
         catalogue.addWidget(self.products_scroll, 1)
 
@@ -203,8 +203,11 @@ class CurrentSaleView(QWidget):
         if viewport_width <= 0:
             return
         spacing = max(0, self.products_grid.horizontalSpacing())
-        card_width = max(card.minimumSizeHint().width() for card in self._product_cards)
-        columns = max(1, min(4, (viewport_width + spacing) // (card_width + spacing)))
+        minimum_width = px(180)
+        columns = max(2, min(5, (viewport_width + spacing) // (minimum_width + spacing)))
+        columns = min(columns, len(self._product_cards))
+        for column in range(5):
+            self.products_grid.setColumnStretch(column, 1 if column < columns else 0)
         for index, card in enumerate(self._product_cards):
             self.products_grid.removeWidget(card)
             self.products_grid.addWidget(card, index // columns, index % columns)
