@@ -76,7 +76,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     QFrame[productCard="true"][selected="true"] {{
         border-width: {px(2)}px;
     }}
-    QLabel#sectionTitle {{ font-size: {px(15)}px; font-weight: 600; }}
+    QLabel#sectionTitle {{ font-size: {fpx("section")}px; font-weight: {WEIGHT_SEMIBOLD}; }}
     QTabWidget::pane {{
         background: transparent; border: none; top: {px(-1)}px;
     }}
@@ -103,7 +103,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     QFrame[sidebar="true"] QLabel {{ color: {palette.on_primary}; }}
     QLabel#businessMark {{
         background: {palette.card}; color: {palette.primary};
-        border-radius: {px(9)}px; font-size: {px(16)}px; font-weight: 600;
+        border-radius: {px(9)}px; font-size: {fpx("sidebar_brand")}px; font-weight: {WEIGHT_SEMIBOLD};
     }}
     QFrame[sidebar="true"] QPushButton {{
         background: transparent; color: {palette.on_primary};
@@ -310,7 +310,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     QLabel#productName, QLabel#cartItemName, QLabel#drawerTitle {{ font-weight: {WEIGHT_MEDIUM}; }}
     QLabel#productThumbnail {{
         background: {palette.tint}; color: {palette.primary_text or palette.primary};
-        border-radius: {px(10)}px; font-size: {px(26)}px; font-weight: 600;
+        border-radius: {px(10)}px; font-size: {fpx("thumbnail")}px; font-weight: 600;
     }}
     QLabel#productPrice, QLabel#cartLineTotal, QLabel#receiptTotal {{
         font-weight: 600; color: {palette.text};

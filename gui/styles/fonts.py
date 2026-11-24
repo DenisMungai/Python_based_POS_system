@@ -60,19 +60,19 @@ RECEIPT_FONT_FALLBACKS = (
 # --- Named sizes (design pixels) -------------------------------------------
 
 FONT_SIZES = {
-    "body": 16,             # default text everywhere
-    "small": 13,            # hints, deltas, table headers, stock status
-    "caption": 10,          # chart axis labels
-    "nav": 15,              # sidebar buttons
-    "sidebar_brand": 18,    # business name in the sidebar
-    "brand": 20,            # login brand name
-    "callout": 16,          # welcome title, brand mark, login mark
-    "section": 15,          # card section headings
-    "kpi": 25,              # dashboard KPI figures
-    "thumbnail": 26,        # product placeholder letter
-    "receipt_heading": 18,  # on-screen receipt business name
-    "receipt": 11,          # printed / PDF receipt text
-    "error": 12,            # inline validation messages
+    "body": 13,             # default text everywhere (matches .text-body ≈ .875rem at 90% base)
+    "small": 11,            # hints, deltas, table headers, stock status (matches .text-small ≈ .75rem)
+    "caption": 9,           # chart axis labels (matches .text-micro ≈ .625rem)
+    "nav": 11,              # sidebar buttons (matches .75rem buttons)
+    "sidebar_brand": 15,    # business name in the sidebar (matches market-page-title)
+    "brand": 16,            # login brand name (matches .text-title ≈ 1.125rem)
+    "callout": 16,          # welcome title, brand mark, login mark (matches .text-title ≈ 1.125rem)
+    "section": 16,          # card section headings (matches .text-title ≈ 1.125rem)
+    "kpi": 18,              # dashboard KPI figures (prominent but reduced)
+    "thumbnail": 18,        # product placeholder letter
+    "receipt_heading": 16,  # on-screen receipt business name
+    "receipt": 9,           # printed / PDF receipt text (matches .text-micro ≈ .625rem)
+    "error": 11,            # inline validation messages (matches .text-small ≈ .75rem)
 }
 
 # --- Weights ----------------------------------------------------------------
