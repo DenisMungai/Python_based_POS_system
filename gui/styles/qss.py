@@ -125,7 +125,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         color: {palette.text};
         border: {px(1)}px solid {palette.border};
         border-radius: {px(10)}px;
-        padding: {px(9)}px {px(14)}px;
+        padding: {px(9)}px {px(16)}px;
         min-height: {px(20)}px;
     }}
     QPushButton:hover {{ border-color: {palette.primary}; background: {palette.tint}; }}
