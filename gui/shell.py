@@ -15,6 +15,7 @@ from gui.dialogs.profile import ProfileDialog
 from gui.dialogs.sale_complete import SaleCompleteDialog
 from gui.i18n import t
 from gui.icons import load_icon
+from gui.styles.fonts import WEIGHT_SEMIBOLD, fpx
 from gui.styles.qss import build_stylesheet
 from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, Palette, px
 from gui.views.current_sale import CurrentSaleView
@@ -73,7 +74,9 @@ class AppWindow(QMainWindow):
         brand = QLabel(business)
         self.brand_label = brand
         brand.setWordWrap(True)
-        brand.setStyleSheet(f"font-size: {px(18)}px; font-weight: 600;")
+        brand.setStyleSheet(
+            f"font-size: {fpx('sidebar_brand')}px; font-weight: {WEIGHT_SEMIBOLD};"
+        )
         brand_row.addWidget(brand, 1)
         sidebar_layout.addLayout(brand_row)
         sidebar_layout.addSpacing(px(8))
@@ -195,7 +198,7 @@ class AppWindow(QMainWindow):
         sidebar_layout.addWidget(self.user_name_label)
         role = QLabel(user.role)
         role.setContentsMargins(px(24), 0, 0, 0)
-        role.setStyleSheet(f"font-size: {px(12)}px;")
+        role.setStyleSheet(f"font-size: {fpx('nav')}px;")
         sidebar_layout.addWidget(role)
         if user.role == "Admin":
             profile = QPushButton(t("my_profile", "My profile"))

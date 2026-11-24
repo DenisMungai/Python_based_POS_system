@@ -19,6 +19,7 @@ from backend.core.money import fmt
 from backend.core.errors import PosError
 from backend.models.records import SaleResult
 from gui.i18n import t
+from gui.styles.fonts import fpx, receipt_font_family
 from gui.styles.tokens import px
 from gui.widgets import ReceiptWidget
 
@@ -191,8 +192,8 @@ class SaleCompleteDialog(QDialog):
                 "80 mm receipt",
             ))
             document = QTextDocument(self)
-            font = QFont("Courier New")
-            font.setPixelSize(px(11))
+            font = QFont(receipt_font_family())
+            font.setPixelSize(fpx("receipt"))
             document.setDefaultFont(font)
             document.setPlainText(receipt_text)
             document.print_(printer)
@@ -221,8 +222,8 @@ class SaleCompleteDialog(QDialog):
             if dialog.exec() != QDialog.DialogCode.Accepted:
                 return
             document = QTextDocument(self)
-            font = QFont("Courier New")
-            font.setPixelSize(px(11))
+            font = QFont(receipt_font_family())
+            font.setPixelSize(fpx("receipt"))
             document.setDefaultFont(font)
             document.setPlainText(receipt_text)
             document.print_(printer)
