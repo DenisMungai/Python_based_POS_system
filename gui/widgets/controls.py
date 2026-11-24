@@ -421,7 +421,7 @@ class ProductCard(QFrame):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(px(12), px(12), px(12), px(12))
-        layout.setSpacing(px(10))
+        layout.setSpacing(px(14))
 
         # Product image area (approx 105 px high)
         thumbnail = _ProductThumbnail(PRODUCT_TILE_RATIO, palette)
@@ -442,10 +442,14 @@ class ProductCard(QFrame):
 
         # Product price and add-to-cart button in a footer row
         footer = QHBoxLayout()
-        footer.setContentsMargins(0, px(4), 0, 0)
-        footer.setSpacing(px(6))
+        footer.setContentsMargins(0, px(6), 0, 0)
+        footer.setSpacing(px(8))
         price = QLabel(fmt(int(item["price_minor"]), currency))
         price.setObjectName("productPrice")
+        price.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+        )
+        price.setToolTip(fmt(int(item["price_minor"]), currency))
         add_button = QToolButton()
         add_button.setFixedSize(px(28), px(28))
         add_button.setToolTip(t("add_to_sale", "Add to sale"))
@@ -454,8 +458,8 @@ class ProductCard(QFrame):
         add_button.setProperty("primary", True)
         add_button.setEnabled(self.property("inStock") != "false")
         add_button.clicked.connect(lambda: self.add_requested.emit(self.item_id))
-        footer.addWidget(price, 1)
-        footer.addWidget(add_button)
+        footer.addWidget(price, 0)
+        footer.addWidget(add_button, 0)
         layout.addLayout(footer)
 
         # Stock status indicator
