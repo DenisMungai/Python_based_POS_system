@@ -69,6 +69,7 @@ FONT_SIZES = {
     "callout": 16,          # welcome title, brand mark, login mark (matches .text-title ≈ 1.125rem)
     "section": 16,          # card section headings (matches .text-title ≈ 1.125rem)
     "kpi": 18,              # dashboard KPI figures (prominent but reduced)
+    "price": 14,            # product price on catalogue cards
     "thumbnail": 18,        # product placeholder letter
     "receipt_heading": 16,  # on-screen receipt business name
     "receipt": 9,           # printed / PDF receipt text (matches .text-micro ≈ .625rem)

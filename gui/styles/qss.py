@@ -69,12 +69,27 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         border: {px(1)}px solid {palette.border};
         border-radius: {px(4)}px;
     }}
-    QFrame[productCard="true"]:hover,
-    QFrame[productCard="true"][selected="true"] {{
-        border-color: {palette.primary}; background: {palette.card};
+    QFrame[productCard="true"] {{
+        background: {palette.card};
+        border: {px(1)}px solid {palette.border};
+        border-radius: {px(12)}px;
+    }}
+    QFrame[productCard="true"]:hover {{
+        border-color: {palette.primary}; background: {palette.tint};
+    }}
+    QFrame[productCard="true"]:pressed {{
+        background: {palette.pressed};
     }}
     QFrame[productCard="true"][selected="true"] {{
+        border-color: {palette.primary};
         border-width: {px(2)}px;
+        background: {palette.tint};
+    }}
+    QFrame[productCard="true"][inStock="false"] {{
+        border-color: {palette.border}; background: {palette.canvas};
+    }}
+    QFrame[productCard="true"][inStock="false"]:hover {{
+        border-color: {palette.border}; background: {palette.canvas};
     }}
     QLabel#sectionTitle {{ font-size: {fpx("section")}px; font-weight: {WEIGHT_SEMIBOLD}; }}
     QTabWidget::pane {{
@@ -307,12 +322,14 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     }}
     QLabel#kpiValue {{ font-size: {fpx("kpi")}px; font-weight: {WEIGHT_SEMIBOLD}; }}
     QLabel#kpiDelta {{ color: {palette.success}; font-size: {fpx("small")}px; }}
-    QLabel#productName, QLabel#cartItemName, QLabel#drawerTitle {{ font-weight: {WEIGHT_MEDIUM}; }}
+    QLabel#productName, QLabel#drawerTitle {{ font-size: {fpx("body")}px; font-weight: {WEIGHT_MEDIUM}; }}
+    QLabel#cartItemName {{ font-weight: {WEIGHT_MEDIUM}; }}
     QLabel#productThumbnail {{
         background: {palette.tint}; color: {palette.primary_text or palette.primary};
         border-radius: {px(10)}px; font-size: {fpx("thumbnail")}px; font-weight: 600;
     }}
-    QLabel#productPrice, QLabel#cartLineTotal, QLabel#receiptTotal {{
+    QLabel#productPrice {{ font-size: {fpx("price")}px; font-weight: {WEIGHT_SEMIBOLD}; color: {palette.text}; }}
+    QLabel#cartLineTotal, QLabel#receiptTotal {{
         font-weight: 600; color: {palette.text};
     }}
     QLabel#stockStatus {{ color: {palette.secondary}; font-size: {fpx("small")}px; }}

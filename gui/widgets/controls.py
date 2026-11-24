@@ -397,7 +397,11 @@ def make_thumbnail_label(
 
 
 class ProductCard(QFrame):
-    """Show one catalogue item and emit a request to add it to a sale."""
+    """Show one catalogue item and emit a request to add it to the cart.
+
+    The entire card is clickable. Out-of-stock items are visually muted and
+    cannot be added to the cart.
+    """
 
     add_requested = Signal(int)
 
@@ -407,67 +411,75 @@ class ProductCard(QFrame):
     ) -> None:
         super().__init__(parent)
         self.item_id = int(item["id"])
+        self.currency = currency
+        self.palette = palette
         self.setProperty("productCard", True)
         self.setProperty("selected", False)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setMinimumWidth(px(180))
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFixedSize(px(170), px(220))
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setContentsMargins(px(12), px(12), px(12), px(12))
+        layout.setSpacing(px(8))
+
+        # Product image area (approx 105 px high)
         thumbnail = _ProductThumbnail(PRODUCT_TILE_RATIO, palette)
         image_path = str(item.get("image_path") or "")
         thumbnail.set_image_path(image_path, str(item["name"]))
+        thumbnail.setFixedHeight(px(105))
         layout.addWidget(thumbnail)
-        details = QWidget()
-        details.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        details_layout = QVBoxLayout(details)
-        details_layout.setContentsMargins(px(10), px(8), px(10), px(9))
-        details_layout.setSpacing(px(3))
-        name = ElidedLabel(str(item["name"]))
+
+        # Product name (max two lines, word-wrapped)
+        name = QLabel(str(item["name"]))
         name.setObjectName("productName")
-        name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        stock = int(item.get("stock_milli", 0))
-        item_type = str(item.get("item_type", "product"))
-        stock_text = (
-            t("available", "Available") if item_type in {"service", "non_inventory"}
-            else t("out_of_stock", "Out of stock") if stock == 0
-            else t("low_stock", "Low stock") if item.get("low_stock_milli", 0) >= stock
-            else t("in_stock", "In stock")
+        name.setWordWrap(True)
+        name.setMaximumHeight(px(32))
+        name.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
         )
-        stock_label = QLabel(stock_text)
-        stock_label.setObjectName("stockStatus")
-        stock_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        footer = QHBoxLayout()
-        footer.setContentsMargins(0, 0, 0, 0)
-        footer.setSpacing(px(6))
+        layout.addWidget(name)
+
+        # Product price (prominent, bold)
         price = QLabel(fmt(int(item["price_minor"]), currency))
         price.setObjectName("productPrice")
-        add_button = QToolButton()
-        add_button.setFixedSize(px(30), px(30))
-        add_button.setToolTip(t("add_to_sale", "Add to sale"))
-        add_button.setAccessibleName(t("add_to_sale", "Add to sale"))
-        add_button.setIcon(load_icon("plus", palette.on_primary, px(14)))
-        add_button.setProperty("primary", True)
-        add_button.clicked.connect(lambda: self.add_requested.emit(self.item_id))
-        footer.addWidget(price, 1)
-        footer.addWidget(add_button)
-        details_layout.addWidget(name)
-        details_layout.addWidget(stock_label)
-        details_layout.addLayout(footer)
-        layout.addWidget(details)
-        self._thumbnail = thumbnail
-        self._details = details
+        layout.addWidget(price)
 
-    def resizeEvent(self, event: QResizeEvent) -> None:
-        super().resizeEvent(event)
-        tile_width = max(1, self._thumbnail.width())
-        tile_height = max(1, round(tile_width / PRODUCT_TILE_RATIO))
-        if self._thumbnail.height() != tile_height:
-            self._thumbnail.setFixedHeight(tile_height)
-        card_height = tile_height + self._details.sizeHint().height() + 2
-        if self.height() != card_height:
-            self.setFixedHeight(card_height)
+        # Stock status indicator
+        stock = int(item.get("stock_milli", 0))
+        item_type = str(item.get("item_type", "product"))
+        low_stock_milli = int(item.get("low_stock_milli", 0))
+        if item_type in {"service", "non_inventory"}:
+            stock_text = t("available", "Available")
+            self.setProperty("inStock", "true")
+        elif stock == 0:
+            stock_text = t("out_of_stock", "Out of stock")
+            self.setProperty("inStock", "false")
+        elif low_stock_milli >= stock:
+            stock_text = t("low_stock", "Low stock")
+            self.setProperty("inStock", "true")
+        else:
+            stock_text = t("in_stock", "In stock")
+            self.setProperty("inStock", "true")
+
+        stock_label = QLabel(stock_text)
+        stock_label.setObjectName("stockStatus")
+        layout.addWidget(stock_label)
+        layout.addStretch(1)
+
+    def mouseReleaseEvent(self, event: Any) -> None:
+        """Add the item to the cart when the card is released (if in stock)."""
+        if event.button() == Qt.MouseButton.LeftButton:
+            if self.property("inStock") != "false":
+                self.add_requested.emit(self.item_id)
+        super().mouseReleaseEvent(event)
+
+    def set_selected(self, selected: bool) -> None:
+        """Update the selected state for stylesheet selectors."""
+        self.setProperty("selected", selected)
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.update()
 
 
 class CategoryChip(QPushButton):

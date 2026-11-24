@@ -72,7 +72,7 @@ class CurrentSaleView(QWidget):
         self.products_page = QWidget()
         self.products_grid = QGridLayout(self.products_page)
         self.products_grid.setContentsMargins(0, 0, 0, 0)
-        self.products_grid.setSpacing(px(8))
+        self.products_grid.setSpacing(px(14))
         self.products_grid.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.products_scroll.setWidget(self.products_page)
         catalogue.addWidget(self.products_scroll, 1)
@@ -189,7 +189,7 @@ class CurrentSaleView(QWidget):
         selected_ids = {line.item_id for line in self.cart.lines()}
         for index, item in enumerate(items):
             card = ProductCard(item, self.currency)
-            card.setProperty("selected", card.item_id in selected_ids)
+            card.set_selected(card.item_id in selected_ids)
             card.add_requested.connect(self._add_item)
             self._product_cards.append(card)
         self._reflow_products()
@@ -203,7 +203,7 @@ class CurrentSaleView(QWidget):
         if viewport_width <= 0:
             return
         spacing = max(0, self.products_grid.horizontalSpacing())
-        minimum_width = px(180)
+        minimum_width = px(170)
         columns = max(2, min(5, (viewport_width + spacing) // (minimum_width + spacing)))
         columns = min(columns, len(self._product_cards))
         for column in range(5):
@@ -299,11 +299,7 @@ class CurrentSaleView(QWidget):
         selected_ids = {line.item_id for line in self.cart.lines()}
         for card in self._product_cards:
             selected = card.item_id in selected_ids
-            if card.property("selected") != selected:
-                card.setProperty("selected", selected)
-                card.style().unpolish(card)
-                card.style().polish(card)
-                card.update()
+            card.set_selected(selected)
         has_lines = self.quote is not None
         if has_lines and self.quote is not None:
             for line in self.quote["lines"]:
