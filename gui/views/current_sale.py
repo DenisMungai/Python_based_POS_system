@@ -203,7 +203,7 @@ class CurrentSaleView(QWidget):
         if viewport_width <= 0:
             return
         spacing = max(0, self.products_grid.horizontalSpacing())
-        minimum_width = px(170)
+        minimum_width = px(190)
         columns = max(2, min(5, (viewport_width + spacing) // (minimum_width + spacing)))
         columns = min(columns, len(self._product_cards))
         for column in range(5):

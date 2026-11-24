@@ -416,12 +416,13 @@ class ProductCard(QFrame):
         self.setProperty("productCard", True)
         self.setProperty("selected", False)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setFixedSize(px(170), px(220))
+        # A wider, taller tile prevents long names and prices from being clipped.
+        self.setFixedSize(px(190), px(300))
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(px(12), px(12), px(12), px(12))
-        layout.setSpacing(px(14))
+        layout.setContentsMargins(px(10), px(10), px(10), px(10))
+        layout.setSpacing(px(6))
 
         # Product image area (approx 105 px high)
         thumbnail = _ProductThumbnail(PRODUCT_TILE_RATIO, palette)
@@ -430,37 +431,36 @@ class ProductCard(QFrame):
         thumbnail.setFixedHeight(px(105))
         layout.addWidget(thumbnail)
 
-        # Product name (max two lines, word-wrapped)
+        # Let the name wrap naturally instead of imposing a clipping height.
         name = QLabel(str(item["name"]))
         name.setObjectName("productName")
         name.setWordWrap(True)
-        name.setMaximumHeight(px(32))
         name.setAlignment(
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
         )
         layout.addWidget(name)
 
-        # Product price and add-to-cart button in a footer row
-        footer = QHBoxLayout()
-        footer.setContentsMargins(0, px(6), 0, 0)
-        footer.setSpacing(px(8))
+        # Keep the amount on a full-width row, separate from the button.
         price = QLabel(fmt(int(item["price_minor"]), currency))
         price.setObjectName("productPrice")
         price.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop,
         )
+        price.setWordWrap(True)
         price.setToolTip(fmt(int(item["price_minor"]), currency))
+        layout.addWidget(price)
+
         add_button = QToolButton()
         add_button.setFixedSize(px(28), px(28))
         add_button.setToolTip(t("add_to_sale", "Add to sale"))
         add_button.setAccessibleName(t("add_to_sale", "Add to sale"))
         add_button.setIcon(load_icon("plus", palette.on_primary, px(14)))
         add_button.setProperty("primary", True)
-        add_button.setEnabled(self.property("inStock") != "false")
         add_button.clicked.connect(lambda: self.add_requested.emit(self.item_id))
-        footer.addWidget(price, 0)
-        footer.addWidget(add_button, 0)
-        layout.addLayout(footer)
+        button_row = QHBoxLayout()
+        button_row.addStretch(1)
+        button_row.addWidget(add_button)
+        layout.addLayout(button_row)
 
         # Stock status indicator
         stock = int(item.get("stock_milli", 0))
@@ -479,6 +479,7 @@ class ProductCard(QFrame):
             stock_text = t("in_stock", "In stock")
             self.setProperty("inStock", "true")
 
+        add_button.setEnabled(self.property("inStock") != "false")
         stock_label = QLabel(stock_text)
         stock_label.setObjectName("stockStatus")
         layout.addWidget(stock_label)
