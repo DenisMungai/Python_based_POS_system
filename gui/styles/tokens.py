@@ -86,14 +86,10 @@ _BASE = {
 
 PALETTES: dict[str, Palette] = {
     "Navy": Palette("Navy", "#1D4ED8", "#1E40AF", "#1E3A8A", "#EFF6FF", "#FFFFFF", **_BASE),
-    "Emerald": Palette(
-        "Emerald", "#15A046", "#19A84B", "#0F7032", "#E9F7EE", "#071A0D",
-        primary_text="#116B35", **_BASE,
-    ),
     # Deep evergreen surfaces with restrained champagne-brass actions create a
     # quieter, hospitality-grade default without hard-coding a business brand.
-    "Teal": Palette(
-        "Teal", "#A7864F", "#927342", "#765B32", "#F3EEE4", "#FFFFFF",
+    "Emerald": Palette(
+        "Emerald", "#A7864F", "#927342", "#765B32", "#F3EEE4", "#FFFFFF",
         primary_text="#70572F",
         canvas="#F4F2ED", card="#FFFFFF", border="#E6E0D5",
         input_fill="#FAF9F6", text="#252A27", secondary="#72776F",
@@ -104,12 +100,15 @@ PALETTES: dict[str, Palette] = {
         sidebar_bg="#172D2A", sidebar_text="#F4F1E9",
         sidebar_active="#EAE3D6", sidebar_active_text="#263A34",
     ),
+    # Deep evergreen surfaces with restrained champagne-brass actions create a
+    # quieter, hospitality-grade default without hard-coding a business brand.
+    "Teal": Palette("Teal", "#0F766E", "#115E59", "#134E4A", "#F0FDFA", "#FFFFFF", **_BASE),
     "Amber": Palette("Amber", "#B45309", "#92400E", "#78350F", "#FFFBEB", "#FFFFFF", **_BASE),
     "Red": Palette("Red", "#DC2626", "#B91C1C", "#991B1B", "#FEF2F2", "#FFFFFF", **_BASE),
     "Slate": Palette("Slate", "#1E293B", "#334155", "#0F172A", "#F1F5F9", "#FFFFFF", **_BASE),
 }
 
-DEFAULT_PALETTE = PALETTES["Teal"]
+DEFAULT_PALETTE = PALETTES["Emerald"]
 
 __all__ = [
     "DEFAULT_PALETTE", "PALETTES", "Palette", "UI_SCALE",
