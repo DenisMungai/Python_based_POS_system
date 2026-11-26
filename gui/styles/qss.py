@@ -21,7 +21,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     }}
     QMainWindow, QDialog {{ background: {palette.canvas}; }}
     QFrame#loginBrand {{
-        background: {palette.primary};
+        background: {palette.sidebar_bg};
         border: none;
     }}
     QFrame#loginBrand QLabel {{
@@ -111,17 +111,17 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     QTabBar::tab:hover:!selected {{ background: {palette.tint}; }}
     QTabBar::tab:focus {{ border: {px(2)}px solid {palette.primary}; }}
     QFrame[sidebar="true"] {{
-        background: {palette.primary};
+        background: {palette.sidebar_bg};
         border: none;
         border-radius: 0;
     }}
-    QFrame[sidebar="true"] QLabel {{ color: {palette.on_primary}; }}
+    QFrame[sidebar="true"] QLabel {{ color: {palette.sidebar_text}; }}
     QLabel#businessMark {{
-        background: {palette.card}; color: {palette.primary};
+        background: {palette.sidebar_active}; color: {palette.sidebar_active_text};
         border-radius: {px(9)}px; font-size: {fpx("sidebar_brand")}px; font-weight: {WEIGHT_SEMIBOLD};
     }}
     QFrame[sidebar="true"] QPushButton {{
-        background: transparent; color: {palette.on_primary};
+        background: transparent; color: {palette.sidebar_text};
         border: {px(1)}px solid transparent; text-align: left;
         min-height: {px(38)}px;
         padding: {px(8)}px {px(12)}px;
@@ -129,11 +129,11 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         font-size: {fpx("nav")}px;
     }}
     QFrame[sidebar="true"] QPushButton:hover {{
-        background: rgba(255, 255, 255, 30); border-color: rgba(255, 255, 255, 30);
+        background: rgba(255, 255, 255, 18); border-color: rgba(255, 255, 255, 24);
     }}
     QFrame[sidebar="true"] QPushButton[active="true"] {{
-        background: {palette.card}; color: {palette.primary_text or palette.primary};
-        border-color: {palette.card};
+        background: {palette.sidebar_active}; color: {palette.sidebar_active_text};
+        border-color: {palette.sidebar_active};
     }}
     QPushButton {{
         background: {palette.card};
