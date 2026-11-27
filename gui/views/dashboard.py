@@ -29,13 +29,17 @@ class DashboardView(QWidget):
         self.scroll.setFrameShape(QFrame.Shape.NoFrame)
         content = QWidget()
         self.layout = QVBoxLayout(content)
-        self.layout.setContentsMargins(px(28), px(20), px(28), px(24))
+        self.layout.setContentsMargins(px(24), px(20), px(24), px(24))
         self.layout.setSpacing(px(14))
         self.kpi_grid = QHBoxLayout()
         self.kpi_grid.setSpacing(px(12))
         self.layout.addLayout(self.kpi_grid)
 
         self.current_sale = CurrentSaleView(context)
+        # Embedded in the dashboard, align the workspace with the KPI row.
+        embedded_margins = self.current_sale.layout()
+        if embedded_margins is not None:
+            embedded_margins.setContentsMargins(0, px(8), 0, 0)
         self.current_sale.sale_completed.connect(self.sale_completed.emit)
         self.layout.addWidget(self.current_sale, 1)
 

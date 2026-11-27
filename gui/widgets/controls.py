@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 from backend.core.money import fmt, fmt_qty
 from backend.services.support import ReceiptService
 from gui.icons import load_icon
-from gui.styles.tokens import DEFAULT_PALETTE, Palette, px
+from gui.styles.tokens import DEFAULT_PALETTE, Palette, active_palette, px
 from gui.i18n import t
 
 PRODUCT_TILE_RATIO = 4 / 5
@@ -249,22 +249,37 @@ class SidebarNavItem(QPushButton):
 
     def __init__(
         self, route: str, label: str, icon_name: str, parent: QWidget | None = None,
-        palette: Palette = DEFAULT_PALETTE,
+        palette: Palette | None = None,
     ) -> None:
+        palette = palette or active_palette()
         super().__init__(label, parent)
         self.route = route
         self.icon_name = icon_name
         self.palette = palette
-        self.setIcon(load_icon(icon_name, palette.on_primary, 18))
+        self.setIcon(load_icon(icon_name, palette.sidebar_muted, 18))
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setCheckable(True)
         self.clicked.connect(lambda: self.navigation_requested.emit(self.route))
+
+    def paintEvent(self, event: Any) -> None:
+        """Draw the standard button, then a slim accent marker on the active route."""
+        super().paintEvent(event)
+        if not self.property("active"):
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(self.palette.accent))
+        bar_height = self.height() * 0.5
+        painter.drawRoundedRect(
+            QRectF(0, (self.height() - bar_height) / 2, px(3), bar_height), px(1.5), px(1.5),
+        )
 
     def set_active(self, active: bool) -> None:
         """Set the active route state for stylesheet selectors."""
         self.setProperty("active", active)
         self.setChecked(active)
-        icon_color = self.palette.primary if active else self.palette.on_primary
+        icon_color = self.palette.sidebar_active_text if active else self.palette.sidebar_muted
         self.setIcon(load_icon(self.icon_name, icon_color, 18))
         self.style().unpolish(self)
         self.style().polish(self)
@@ -283,6 +298,7 @@ class KpiCard(QFrame):
         layout.setContentsMargins(px(18), px(16), px(18), px(16))
         layout.setSpacing(px(8))
         self.title_label = QLabel(title)
+        self.title_label.setObjectName("kpiLabel")
         self.value_label = QLabel(value)
         self.value_label.setObjectName("kpiValue")
         self.delta_label = QLabel(delta)
@@ -291,11 +307,13 @@ class KpiCard(QFrame):
         layout.addWidget(self.title_label)
         layout.addWidget(self.value_label)
         layout.addWidget(self.delta_label)
+        self.delta_label.setVisible(bool(delta))
 
     def set_value(self, value: str, delta: str = "") -> None:
         """Refresh the card from a new dashboard response."""
         self.value_label.setText(value)
         self.delta_label.setText(delta)
+        self.delta_label.setVisible(bool(delta))
 
 
 class ElidedLabel(QLabel):
@@ -322,9 +340,10 @@ class _ProductThumbnail(QLabel):
     """Paint a cover-cropped image with rounded top corners or a fallback initial."""
 
     def __init__(
-        self, aspect_ratio: float, palette: Palette = DEFAULT_PALETTE,
+        self, aspect_ratio: float, palette: Palette | None = None,
         parent: QWidget | None = None,
     ) -> None:
+        palette = palette or active_palette()
         super().__init__(parent)
         self.aspect_ratio = aspect_ratio
         self._palette = palette
@@ -387,8 +406,9 @@ class _ProductThumbnail(QLabel):
 
 def make_thumbnail_label(
     image_path: str, name: str, size: int = 48,
-    parent: QWidget | None = None, palette: Palette = DEFAULT_PALETTE,
+    parent: QWidget | None = None, palette: Palette | None = None,
 ) -> QLabel:
+    palette = palette or active_palette()
     """Create a square cover-cropped thumbnail with a tinted initial fallback."""
     thumbnail = _ProductThumbnail(1.0, palette, parent)
     thumbnail.setFixedSize(px(size), px(size))
@@ -407,8 +427,9 @@ class ProductCard(QFrame):
 
     def __init__(
         self, item: Mapping[str, Any], currency: str,
-        parent: QWidget | None = None, palette: Palette = DEFAULT_PALETTE,
+        parent: QWidget | None = None, palette: Palette | None = None,
     ) -> None:
+        palette = palette or active_palette()
         super().__init__(parent)
         self.item_id = int(item["id"])
         self.currency = currency
@@ -416,74 +437,71 @@ class ProductCard(QFrame):
         self.setProperty("productCard", True)
         self.setProperty("selected", False)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        # A wider, taller tile prevents long names and prices from being clipped.
-        self.setFixedSize(px(190), px(300))
+        # A wide tile with a generous image keeps names and prices unclipped.
+        self.setFixedSize(px(190), px(262))
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(px(10), px(10), px(10), px(10))
+        layout.setContentsMargins(px(10), px(10), px(10), px(12))
         layout.setSpacing(px(6))
 
-        # Product image area (approx 105 px high)
         thumbnail = _ProductThumbnail(PRODUCT_TILE_RATIO, palette)
         image_path = str(item.get("image_path") or "")
         thumbnail.set_image_path(image_path, str(item["name"]))
-        thumbnail.setFixedHeight(px(105))
+        thumbnail.setFixedHeight(px(118))
         layout.addWidget(thumbnail)
 
         # Let the name wrap naturally instead of imposing a clipping height.
         name = QLabel(str(item["name"]))
         name.setObjectName("productName")
         name.setWordWrap(True)
-        name.setAlignment(
-            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft,
-        )
+        name.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(name)
-
-        # Keep the amount on a full-width row, separate from the button.
-        price = QLabel(fmt(int(item["price_minor"]), currency))
-        price.setObjectName("productPrice")
-        price.setAlignment(
-            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop,
-        )
-        price.setWordWrap(True)
-        price.setToolTip(fmt(int(item["price_minor"]), currency))
-        layout.addWidget(price)
-
-        add_button = QToolButton()
-        add_button.setFixedSize(px(28), px(28))
-        add_button.setToolTip(t("add_to_sale", "Add to sale"))
-        add_button.setAccessibleName(t("add_to_sale", "Add to sale"))
-        add_button.setIcon(load_icon("plus", palette.on_primary, px(14)))
-        add_button.setProperty("primary", True)
-        add_button.clicked.connect(lambda: self.add_requested.emit(self.item_id))
-        button_row = QHBoxLayout()
-        button_row.addStretch(1)
-        button_row.addWidget(add_button)
-        layout.addLayout(button_row)
 
         # Stock status indicator
         stock = int(item.get("stock_milli", 0))
         item_type = str(item.get("item_type", "product"))
         low_stock_milli = int(item.get("low_stock_milli", 0))
+        stock_level = "ok"
         if item_type in {"service", "non_inventory"}:
             stock_text = t("available", "Available")
             self.setProperty("inStock", "true")
         elif stock == 0:
             stock_text = t("out_of_stock", "Out of stock")
+            stock_level = "out"
             self.setProperty("inStock", "false")
         elif low_stock_milli >= stock:
             stock_text = t("low_stock", "Low stock")
+            stock_level = "low"
             self.setProperty("inStock", "true")
         else:
             stock_text = t("in_stock", "In stock")
             self.setProperty("inStock", "true")
-
-        add_button.setEnabled(self.property("inStock") != "false")
         stock_label = QLabel(stock_text)
         stock_label.setObjectName("stockStatus")
+        stock_label.setProperty("stock", stock_level)
         layout.addWidget(stock_label)
         layout.addStretch(1)
+
+        # Price and the add button share one baseline row at the foot of the card.
+        price = QLabel(fmt(int(item["price_minor"]), currency))
+        price.setObjectName("productPrice")
+        price.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        price.setToolTip(fmt(int(item["price_minor"]), currency))
+
+        add_button = QToolButton()
+        add_button.setFixedSize(px(30), px(30))
+        add_button.setToolTip(t("add_to_sale", "Add to sale"))
+        add_button.setAccessibleName(t("add_to_sale", "Add to sale"))
+        add_button.setIcon(load_icon("plus", palette.on_primary, px(14)))
+        add_button.setProperty("primary", True)
+        add_button.setEnabled(self.property("inStock") != "false")
+        add_button.clicked.connect(lambda: self.add_requested.emit(self.item_id))
+        footer = QHBoxLayout()
+        footer.setContentsMargins(0, 0, 0, 0)
+        footer.addWidget(price, 1)
+        footer.addWidget(add_button)
+        layout.addLayout(footer)
 
     def mouseReleaseEvent(self, event: Any) -> None:
         """Add the item to the cart when the card is released (if in stock)."""
@@ -520,8 +538,9 @@ class QuantityStepper(QWidget):
 
     def __init__(
         self, quantity_milli: int = 1000, step_milli: int = 1000,
-        parent: QWidget | None = None, palette: Palette = DEFAULT_PALETTE,
+        parent: QWidget | None = None, palette: Palette | None = None,
     ) -> None:
+        palette = palette or active_palette()
         super().__init__(parent)
         if quantity_milli < 0 or step_milli <= 0:
             raise ValueError("Quantity must be nonnegative and step must be positive.")
@@ -574,24 +593,28 @@ class CartLineItem(QFrame):
 
     def __init__(
         self, line: Mapping[str, Any], currency: str,
-        parent: QWidget | None = None, palette: Palette = DEFAULT_PALETTE,
+        parent: QWidget | None = None, palette: Palette | None = None,
     ) -> None:
+        palette = palette or active_palette()
         super().__init__(parent)
         self.item_id = int(line["item_id"])
         self.setProperty("cartLine", True)
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(px(2), px(6), px(2), px(6))
-        layout.setSpacing(px(6))
+        layout.setContentsMargins(px(2), px(8), px(2), px(8))
+        layout.setSpacing(px(10))
         thumbnail = make_thumbnail_label(
             str(line.get("image_path") or ""), str(line["name"]), 44,
             parent=self, palette=palette,
         )
         detail = QVBoxLayout()
+        detail.setSpacing(px(1))
         name = QLabel(str(line["name"]))
         name.setObjectName("cartItemName")
         name.setWordWrap(False)
         detail.addWidget(name)
-        detail.addWidget(QLabel(fmt(int(line["unit_price_minor"]), currency)))
+        unit_price = QLabel(fmt(int(line["unit_price_minor"]), currency))
+        unit_price.setObjectName("mutedText")
+        detail.addWidget(unit_price)
         stepper = QuantityStepper(
             int(line["quantity_milli"]),
             step_milli=250 if line.get("item_type") == "weighed" else 1000,
@@ -603,12 +626,14 @@ class CartLineItem(QFrame):
         )
         total = QLabel(fmt(int(line["line_total_minor"]), currency))
         total.setObjectName("cartLineTotal")
+        total.setMinimumWidth(px(76))
+        total.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         remove_button = QToolButton()
         remove_button.setToolTip(t("remove_item", "Remove item"))
         remove_button.setAccessibleName(t("remove_item", "Remove item"))
         remove_button.setIcon(load_icon("close", palette.muted, 16))
         remove_button.clicked.connect(lambda: self.remove_requested.emit(self.item_id))
-        layout.addWidget(thumbnail)
+        layout.addWidget(thumbnail, 0, Qt.AlignmentFlag.AlignVCenter)
         layout.addLayout(detail, 1)
         layout.addWidget(stepper)
         layout.addWidget(total)
@@ -633,6 +658,10 @@ class SearchField(QLineEdit):
         super().__init__(parent)
         self.setPlaceholderText(placeholder or t("search", "Search"))
         self.setClearButtonEnabled(True)
+        self.addAction(
+            load_icon("search", DEFAULT_PALETTE.muted, 16),
+            QLineEdit.ActionPosition.LeadingPosition,
+        )
         self.returnPressed.connect(lambda: self.search_submitted.emit(self.text().strip()))
 
 
@@ -755,11 +784,20 @@ class ReceiptWidget(QFrame):
             row.addWidget(QLabel(label), 1)
             row.addWidget(QLabel(fmt(int(receipt["sale"][key]), receipt["currency"])))
             layout.addLayout(row)
+        total_separator = QFrame()
+        total_separator.setObjectName("receiptSeparator")
+        total_separator.setFixedHeight(px(1))
+        layout.addWidget(total_separator)
+        total_row = QHBoxLayout()
+        total_caption = QLabel(t("total", "Total"))
+        total_caption.setObjectName("receiptTotal")
+        total_row.addWidget(total_caption, 1)
         total = QLabel(fmt(int(receipt["sale"]["total_minor"]), receipt["currency"]))
         total.setObjectName("receiptTotal")
-        layout.addWidget(total, alignment=Qt.AlignmentFlag.AlignRight)
+        total_row.addWidget(total)
+        layout.addLayout(total_row)
         payment_heading = QLabel(t("payment_method", "Payment"))
-        payment_heading.setObjectName("sectionTitle")
+        payment_heading.setObjectName("drawerTitle")
         layout.addWidget(payment_heading)
         for payment in receipt["payments"]:
             row = QHBoxLayout()

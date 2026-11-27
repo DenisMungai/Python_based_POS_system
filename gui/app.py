@@ -12,7 +12,9 @@ from gui.icons import load_app_icon
 from gui.i18n import configure_terminology
 from gui.styles.fonts import fpx, ui_font_family
 from gui.styles.qss import build_stylesheet
-from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, Palette, configure_ui_scale
+from gui.styles.tokens import (
+    DEFAULT_PALETTE, PALETTES, Palette, configure_ui_scale, set_active_palette,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +68,7 @@ def create_application(
         context.settings.get("accent_palette", DEFAULT_PALETTE.name) or "",
         DEFAULT_PALETTE,
     )
+    set_active_palette(selected_palette)
     application.setStyleSheet(build_stylesheet(selected_palette))
     configure_terminology(context.settings)
     bridge = EventBusBridge(context)

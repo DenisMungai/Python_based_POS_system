@@ -1,8 +1,9 @@
 """Central font configuration for the desktop UI.
 
 This is the ONLY file you need to edit to change the app's typography.
-No font files are downloaded or bundled: the names below refer to fonts that
-are already installed on the computer.
+Poppins Regular, Medium and Bold ship in ``assets/fonts`` and are registered
+at startup, so the interface looks the same on every computer. Any other name
+below must already be installed on the computer.
 
 IMPORTANT: Font settings are read once when the app starts. After saving a
 change here, you MUST fully close the application (click X / Alt+F4) and run
@@ -26,23 +27,41 @@ paper. It is configured separately below and does not affect the main UI.
 
 import logging
 from collections.abc import Sequence
+from pathlib import Path
 
 from gui.styles.tokens import px
 
 LOGGER = logging.getLogger(__name__)
+
+FONT_DIR = Path(__file__).resolve().parents[2] / "assets" / "fonts"
+_bundled_registered = False
+
+
+def register_bundled_fonts() -> None:
+    """Register the bundled Poppins files with Qt once per process."""
+    global _bundled_registered
+    from PySide6.QtGui import QFontDatabase
+    from PySide6.QtWidgets import QApplication
+
+    if _bundled_registered or QApplication.instance() is None:
+        return
+    for font_file in sorted(FONT_DIR.glob("*.ttf")):
+        if QFontDatabase.addApplicationFont(str(font_file)) < 0:
+            LOGGER.warning("Could not load bundled font %s.", font_file.name)
+    _bundled_registered = True
 
 # --- Family selection -------------------------------------------------------
 
 # Main UI family. Change this one line to restyle the whole application.
 # These families are installed on a standard Windows system; no files needed.
 FONT_FAMILIES = (
-    "Calibri",
+    "Poppins",
     "Segoe UI",
+    "Calibri",
     "Arial",
-    "Tahoma",
     "Verdana",
 )
-FONT_FAMILY = "Verdana"
+FONT_FAMILY = "Poppins"
 
 # Used only when FONT_FAMILY is not installed on the current computer.
 FONT_FALLBACKS = FONT_FAMILIES
@@ -63,23 +82,29 @@ FONT_SIZES = {
     "body": 13,             # default text everywhere (matches .text-body ≈ .875rem at 90% base)
     "small": 11,            # hints, deltas, table headers, stock status (matches .text-small ≈ .75rem)
     "caption": 9,           # chart axis labels (matches .text-micro ≈ .625rem)
-    "nav": 11,              # sidebar buttons (matches .75rem buttons)
+    "nav": 12,              # sidebar buttons
     "sidebar_brand": 15,    # business name in the sidebar (matches market-page-title)
     "brand": 16,            # login brand name (matches .text-title ≈ 1.125rem)
-    "callout": 16,          # welcome title, brand mark, login mark (matches .text-title ≈ 1.125rem)
+    "callout": 18,          # welcome title, brand mark, login mark, checkout action
     "section": 16,          # card section headings (matches .text-title ≈ 1.125rem)
-    "kpi": 18,              # dashboard KPI figures (prominent but reduced)
-    "price": 14,            # product price on catalogue cards
+    "kpi": 24,              # dashboard KPI figures
+    "price": 13,            # product price on catalogue cards
     "thumbnail": 18,        # product placeholder letter
     "receipt_heading": 16,  # on-screen receipt business name
     "receipt": 9,           # printed / PDF receipt text (matches .text-micro ≈ .625rem)
     "error": 11,            # inline validation messages (matches .text-small ≈ .75rem)
+    "label": 11,            # small caps-style labels above figures
+    "total": 22,            # grand total on the sale ticket
 }
 
 # --- Weights ----------------------------------------------------------------
 
-WEIGHT_MEDIUM = 600
-WEIGHT_SEMIBOLD = 700
+# Poppins ships Regular (400), Medium (500) and Bold (700). Headings and
+# numerals use Medium for a refined, light-handed hierarchy; Bold is reserved
+# for the sale total and other single figures that must dominate.
+WEIGHT_MEDIUM = 500
+WEIGHT_SEMIBOLD = 500
+WEIGHT_STRONG = 700
 
 _warned_families: set[str] = set()
 
@@ -100,6 +125,7 @@ def _installed_families() -> dict[str, str]:
 
     if QApplication.instance() is None:
         return {}
+    register_bundled_fonts()
     return {name.casefold(): name for name in QFontDatabase.families()}
 
 
@@ -145,6 +171,7 @@ def receipt_font_family() -> str:
 
 __all__ = [
     "FONT_FALLBACKS", "FONT_FAMILIES", "FONT_FAMILY", "FONT_SIZES", "RECEIPT_FONT_FALLBACKS",
-    "RECEIPT_FONT_FAMILY", "WEIGHT_MEDIUM", "WEIGHT_SEMIBOLD",
-    "fpx", "receipt_font_family", "resolve_font_family", "ui_font_family",
+    "RECEIPT_FONT_FAMILY", "WEIGHT_MEDIUM", "WEIGHT_SEMIBOLD", "WEIGHT_STRONG",
+    "fpx", "receipt_font_family", "register_bundled_fonts", "resolve_font_family",
+    "ui_font_family",
 ]
