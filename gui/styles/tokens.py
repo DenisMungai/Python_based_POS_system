@@ -60,10 +60,25 @@ class Palette:
     warning_tint: str = "#FFFBEB"
     checkout: str = "#15A046"
     warning_accent: str = "#D97706"
-    sidebar_bg: str = "#0F172A"
-    sidebar_text: str = "#F8FAFC"
-    sidebar_active: str = "#FFFFFF"
-    sidebar_active_text: str = "#1E293B"
+    # Premium chrome: a dark navigation rail shared by every palette, with a
+    # brighter accent that stays legible on it. ``None`` falls back to primary.
+    sidebar: str = "#13171C"
+    sidebar_hover: str = "#1C2128"
+    sidebar_active: str = "#242B34"
+    sidebar_text: str = "#E6E9EE"
+    sidebar_active_text: str = "#FFFFFF"
+    checkout_text: str | None = None
+    sidebar_muted: str = "#8B94A1"
+    sidebar_border: str = "#242B34"
+    accent_on_dark: str | None = None
+    surface_alt: str = "#F1F5F9"
+    hairline: str = "#EEF2F6"
+    success_tint: str = "#E7F6EC"
+
+    @property
+    def accent(self) -> str:
+        """Accent colour for use on the dark navigation rail."""
+        return self.accent_on_dark or self.primary
 
 
 _BASE = {
@@ -84,33 +99,79 @@ _BASE = {
     "warning_accent": "#D97706",
 }
 
+# Warm, restaurant-grade surfaces for the optional Obsidian palette.
+_WARM = {
+    **_BASE,
+    "canvas": "#F7F4EE", "border": "#E8E2D4", "input_fill": "#FBF9F4",
+    "text": "#1B1D22", "secondary": "#6B6F78", "muted": "#9A9DA5",
+    "scrollbar": "#D8D1C0",
+}
+
 PALETTES: dict[str, Palette] = {
-    "Navy": Palette("Navy", "#1D4ED8", "#1E40AF", "#1E3A8A", "#EFF6FF", "#FFFFFF", **_BASE),
+    "Navy": Palette(
+        "Navy", "#1D4ED8", "#1E40AF", "#1E3A8A", "#EFF6FF", "#FFFFFF",
+        accent_on_dark="#6B9BFF", **_BASE,
+    ),
     # Deep evergreen surfaces with restrained champagne-brass actions create a
     # quieter, hospitality-grade default without hard-coding a business brand.
     "Emerald": Palette(
         "Emerald", "#A7864F", "#927342", "#765B32", "#F3EEE4", "#FFFFFF",
-        primary_text="#70572F",
-        canvas="#F4F2ED", card="#FFFFFF", border="#E6E0D5",
-        input_fill="#FAF9F6", text="#252A27", secondary="#72776F",
-        muted="#A3A49C", success="#287653", danger="#B64B45",
-        warning="#9B7138", scrollbar="#D3CEC3",
-        danger_tint="#F9EEEC", warning_tint="#F7F0E4",
-        checkout="#267456", warning_accent="#A7864F",
-        sidebar_bg="#172D2A", sidebar_text="#F4F1E9",
-        sidebar_active="#EAE3D6", sidebar_active_text="#263A34",
+        primary_text="#70572F", accent_on_dark="#C9A96A", checkout_text="#FFFFFF",
+        **{
+            **_BASE,
+            "canvas": "#F4F2ED", "border": "#E6E0D5", "input_fill": "#FAF9F6",
+            "text": "#252A27", "secondary": "#72776F", "muted": "#A3A49C",
+            "success": "#287653", "danger": "#B64B45", "warning": "#9B7138",
+            "scrollbar": "#D3CEC3", "danger_tint": "#F9EEEC",
+            "warning_tint": "#F7F0E4", "checkout": "#267456",
+            "warning_accent": "#A7864F",
+        },
+        surface_alt="#F0ECE3", hairline="#EEE9DF", success_tint="#E7F1EB",
+        sidebar="#172D2A", sidebar_hover="#20403B", sidebar_active="#EAE3D6",
+        sidebar_text="#F4F1E9", sidebar_muted="#9DB0AA", sidebar_border="#28443F",
+        sidebar_active_text="#263A34",
     ),
-    # Deep evergreen surfaces with restrained champagne-brass actions create a
-    # quieter, hospitality-grade default without hard-coding a business brand.
-    "Teal": Palette("Teal", "#0F766E", "#115E59", "#134E4A", "#F0FDFA", "#FFFFFF", **_BASE),
-    "Amber": Palette("Amber", "#B45309", "#92400E", "#78350F", "#FFFBEB", "#FFFFFF", **_BASE),
-    "Red": Palette("Red", "#DC2626", "#B91C1C", "#991B1B", "#FEF2F2", "#FFFFFF", **_BASE),
-    "Slate": Palette("Slate", "#1E293B", "#334155", "#0F172A", "#F1F5F9", "#FFFFFF", **_BASE),
+    "Teal": Palette(
+        "Teal", "#0F766E", "#115E59", "#134E4A", "#F0FDFA", "#FFFFFF",
+        accent_on_dark="#2DD4BF", **_BASE,
+    ),
+    "Amber": Palette(
+        "Amber", "#B45309", "#92400E", "#78350F", "#FFFBEB", "#FFFFFF",
+        accent_on_dark="#FBBF24", **_BASE,
+    ),
+    "Red": Palette(
+        "Red", "#DC2626", "#B91C1C", "#991B1B", "#FEF2F2", "#FFFFFF",
+        accent_on_dark="#F87171", **_BASE,
+    ),
+    "Slate": Palette(
+        "Slate", "#1E293B", "#334155", "#0F172A", "#F1F5F9", "#FFFFFF",
+        accent_on_dark="#94A3B8", **_BASE,
+    ),
+    "Obsidian": Palette(
+        "Obsidian", "#16181D", "#2A2E36", "#0B0C0F", "#F4EFE3", "#F7F3EA",
+        primary_text="#7A5C1E", accent_on_dark="#D4AF6A",
+        surface_alt="#F1ECE0", hairline="#EFEADD", success_tint="#E8F3EA",
+        sidebar="#111317", sidebar_hover="#1B1E24", sidebar_active="#23272E",
+        **{**_WARM, "checkout": "#B8924A"},
+    ),
 }
 
 DEFAULT_PALETTE = PALETTES["Emerald"]
 
+_active_palette: Palette | None = None
+
+
+def set_active_palette(palette: Palette) -> None:
+    """Record the palette in use so widgets built later pick up its colours."""
+    global _active_palette
+    _active_palette = palette
+
+
+def active_palette() -> Palette:
+    """Return the palette selected for this session, or the default."""
+    return _active_palette or DEFAULT_PALETTE
+
 __all__ = [
-    "DEFAULT_PALETTE", "PALETTES", "Palette", "UI_SCALE",
-    "configure_ui_scale", "px",
+    "DEFAULT_PALETTE", "PALETTES", "Palette", "UI_SCALE", "active_palette",
+    "configure_ui_scale", "px", "set_active_palette",
 ]

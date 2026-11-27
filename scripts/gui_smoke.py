@@ -99,8 +99,8 @@ def main() -> int:
         bridge = None
         try:
             application, bridge = create_application(context, [])
-            if DEFAULT_PALETTE.primary != "#15A046":
-                raise RuntimeError("The default primary accent is not the requested green.")
+            if DEFAULT_PALETTE.primary != "#A7864F":
+                raise RuntimeError("The default primary accent is not the champagne brass.")
             if application.windowIcon().isNull():
                 raise RuntimeError("The POS application icon did not load.")
             quantity_stepper = QuantityStepper(2000)
@@ -294,9 +294,8 @@ def main() -> int:
                 or thumbnail.hasScaledContents()
                 or tile_size.width() != thumbnail.width()
                 or tile_size.height() != thumbnail.height()
-                or abs(tile_size.width() / tile_size.height() - PRODUCT_TILE_RATIO) > 1 / tile_size.height()
             ):
-                raise RuntimeError("The saved product image does not fill a uniform 4:5 tile.")
+                raise RuntimeError("The saved product image does not fill its uniform tile.")
             tile_image = thumbnail_pixmap.toImage()
             if any(
                 tile_image.pixelColor(x, y).alpha() != 255

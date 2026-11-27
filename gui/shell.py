@@ -17,7 +17,7 @@ from gui.i18n import t
 from gui.icons import load_icon
 from gui.styles.fonts import WEIGHT_SEMIBOLD, fpx
 from gui.styles.qss import build_stylesheet
-from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, Palette, px
+from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, Palette, px, set_active_palette
 from gui.views.current_sale import CurrentSaleView
 from gui.views.dashboard import DashboardView
 from gui.views.products import ProductsView
@@ -42,6 +42,7 @@ class AppWindow(QMainWindow):
             context.settings.get("accent_palette", DEFAULT_PALETTE.name) or "",
             DEFAULT_PALETTE,
         )
+        set_active_palette(self.palette)
         user = context.auth.current_user
         if user is None:
             raise RuntimeError("The application shell requires an authenticated user.")
@@ -61,7 +62,7 @@ class AppWindow(QMainWindow):
         sidebar.setProperty("sidebar", True)
         sidebar.setFixedWidth(px(232))
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(px(18), px(22), px(18), px(18))
+        sidebar_layout.setContentsMargins(px(16), px(22), px(16), px(16))
         sidebar_layout.setSpacing(px(2))
         brand_row = QHBoxLayout()
         brand_row.setContentsMargins(0, 0, 0, 0)
@@ -74,12 +75,14 @@ class AppWindow(QMainWindow):
         brand = QLabel(business)
         self.brand_label = brand
         brand.setWordWrap(True)
-        brand.setStyleSheet(
-            f"font-size: {fpx('sidebar_brand')}px; font-weight: {WEIGHT_SEMIBOLD};"
-        )
+        brand.setObjectName("sidebarBrand")
         brand_row.addWidget(brand, 1)
         sidebar_layout.addLayout(brand_row)
-        sidebar_layout.addSpacing(px(8))
+        sidebar_layout.addSpacing(px(14))
+        brand_divider = QFrame()
+        brand_divider.setObjectName("sidebarDivider")
+        sidebar_layout.addWidget(brand_divider)
+        sidebar_layout.addSpacing(px(10))
         nav_scroll = QScrollArea()
         nav_scroll.setObjectName("navScroll")
         nav_scroll.setWidgetResizable(True)
@@ -114,7 +117,7 @@ class AppWindow(QMainWindow):
         else:
             orders = OrdersView(context)
             orders.recall_requested.connect(self._recall_held)
-            self._add_route(nav_layout, "orders", t("orders", "Orders"), "sales", orders)
+            self._add_route(nav_layout, "orders", t("orders", "Orders"), "orders", orders)
 
         try:
             context.auth.require_permission("catalog.read")
@@ -146,7 +149,7 @@ class AppWindow(QMainWindow):
         else:
             self._add_route(
                 nav_layout, "sales_history", t("sales_history", "Sales history"),
-                "sales", SalesView(context),
+                "history", SalesView(context),
             )
 
         try:
@@ -156,7 +159,7 @@ class AppWindow(QMainWindow):
         else:
             self._add_route(
                 nav_layout, "returns", t("returns", "Returns"),
-                "sales", ReturnsView(context),
+                "returns", ReturnsView(context),
             )
 
         try:
@@ -166,7 +169,7 @@ class AppWindow(QMainWindow):
         else:
             self._add_route(
                 nav_layout, "discounts", t("discounts", "Discounts"),
-                "sales", DiscountsView(context),
+                "discount", DiscountsView(context),
             )
 
         try:
@@ -176,7 +179,7 @@ class AppWindow(QMainWindow):
         else:
             self._add_route(
                 nav_layout, "reports", t("reports", "Reports"),
-                "dashboard", ReportsView(context),
+                "reports", ReportsView(context),
             )
 
         try:
@@ -186,29 +189,47 @@ class AppWindow(QMainWindow):
         else:
             self._add_route(
                 nav_layout, "users", t("users", "Users"),
-                "customer", UsersView(context),
+                "users", UsersView(context),
             )
             self._add_route(
                 nav_layout, "settings", t("settings", "Settings"),
-                "dashboard", SettingsView(context),
+                "settings", SettingsView(context),
             )
 
+        sidebar_layout.addSpacing(px(8))
+        user_card = QFrame()
+        user_card.setObjectName("userCard")
+        user_card_layout = QHBoxLayout(user_card)
+        user_card_layout.setContentsMargins(px(10), px(9), px(10), px(9))
+        user_card_layout.setSpacing(px(10))
+        avatar = QLabel((user.display_name[:1] or "?").upper())
+        avatar.setObjectName("userAvatar")
+        avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        avatar.setFixedSize(px(32), px(32))
+        user_card_layout.addWidget(avatar)
+        user_text = QVBoxLayout()
+        user_text.setContentsMargins(0, 0, 0, 0)
+        user_text.setSpacing(0)
         self.user_name_label = QLabel(user.display_name)
-        self.user_name_label.setContentsMargins(px(24), 0, 0, 0)
-        sidebar_layout.addWidget(self.user_name_label)
+        self.user_name_label.setObjectName("userName")
+        user_text.addWidget(self.user_name_label)
         role = QLabel(user.role)
-        role.setContentsMargins(px(24), 0, 0, 0)
-        role.setStyleSheet(f"font-size: {fpx('nav')}px;")
-        sidebar_layout.addWidget(role)
+        role.setObjectName("userRole")
+        user_text.addWidget(role)
+        user_card_layout.addLayout(user_text, 1)
+        sidebar_layout.addWidget(user_card)
+        sidebar_layout.addSpacing(px(4))
         if user.role == "Admin":
             profile = QPushButton(t("my_profile", "My profile"))
-            profile.setIcon(load_icon("customer", self.palette.on_primary, 18))
+            profile.setIcon(load_icon("customer", self.palette.sidebar_muted, 18))
             profile.setIconSize(QSize(px(18), px(18)))
+            profile.setCursor(Qt.CursorShape.PointingHandCursor)
             profile.clicked.connect(self._edit_profile)
             sidebar_layout.addWidget(profile)
         logout = QPushButton(t("log_out", "Log out"))
-        logout.setIcon(load_icon("logout", self.palette.on_primary, 18))
+        logout.setIcon(load_icon("logout", self.palette.sidebar_muted, 18))
         logout.setIconSize(QSize(px(18), px(18)))
+        logout.setCursor(Qt.CursorShape.PointingHandCursor)
         logout.clicked.connect(self._logout)
         sidebar_layout.addWidget(logout)
 
@@ -241,6 +262,10 @@ class AppWindow(QMainWindow):
         global_search.setObjectName("globalSearch")
         global_search.setPlaceholderText(t("search_anything", "Search anything"))
         global_search.setFixedWidth(px(245))
+        global_search.addAction(
+            load_icon("search", self.palette.muted, 16),
+            QLineEdit.ActionPosition.LeadingPosition,
+        )
         global_search.textChanged.connect(self._global_search)
         topbar_layout.addWidget(global_search)
         content.addWidget(topbar)
@@ -262,7 +287,7 @@ class AppWindow(QMainWindow):
         nav = SidebarNavItem(route, label, icon, palette=self.palette)
         nav.setToolTip(label)
         nav.setAccessibleName(label)
-        nav.setFixedHeight(px(44))
+        nav.setFixedHeight(px(40))
         nav.navigation_requested.connect(self._navigate)
         sidebar_layout.addWidget(nav)
         self.navigation[route] = nav
@@ -336,23 +361,25 @@ class AppWindow(QMainWindow):
             palette_name = self.context.settings.get("accent_palette", DEFAULT_PALETTE.name)
             palette = PALETTES.get(palette_name or "", DEFAULT_PALETTE)
             self.palette = palette
+            set_active_palette(palette)
             application = QApplication.instance()
             if application is not None:
                 application.setStyleSheet(build_stylesheet(palette))
             icon_by_route = {
                 "dashboard": "dashboard", "products": "catalog", "customers": "customer",
-                "sales_history": "sales", "orders": "sales", "returns": "sales", "discounts": "sales",
-                "reports": "dashboard", "users": "customer", "settings": "dashboard",
-                "sales": "sales",
+                "sales_history": "history", "orders": "orders", "returns": "returns",
+                "discounts": "discount", "reports": "reports", "users": "users",
+                "settings": "settings", "sales": "sales",
             }
             for route, nav in self.navigation.items():
                 nav.icon_name = icon_by_route[route]
                 nav.palette = palette
                 nav.setIcon(load_icon(
                     nav.icon_name,
-                    palette.primary if nav.property("active") else palette.on_primary,
+                    palette.sidebar_active_text if nav.property("active") else palette.sidebar_muted,
                     18,
                 ))
+                nav.update()
             setting_key = payload.get("key") if isinstance(payload, dict) else None
             if setting_key == "business_name":
                 self.setWindowTitle(f"{business} {self.context.settings.term('sale', 'Sale')}")

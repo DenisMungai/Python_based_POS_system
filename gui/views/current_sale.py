@@ -100,13 +100,38 @@ class CurrentSaleView(QWidget):
         self.cart_lines_layout.setSpacing(px(6))
         self.cart_scroll.setWidget(self.cart_page)
         ticket_layout.addWidget(self.cart_scroll, 1)
+        divider = QFrame()
+        divider.setObjectName("totalsDivider")
+        ticket_layout.addWidget(divider)
+        # Value labels keep their historical names; captions sit beside them.
         self.subtotal_label = QLabel()
         self.tax_label = QLabel()
         self.discount_label = QLabel()
         self.total_label = QLabel()
-        self.total_label.setObjectName("receiptTotal")
-        for label in (self.subtotal_label, self.tax_label, self.discount_label, self.total_label):
-            ticket_layout.addWidget(label)
+        totals = QGridLayout()
+        totals.setContentsMargins(0, 0, 0, 0)
+        totals.setHorizontalSpacing(px(8))
+        totals.setVerticalSpacing(px(5))
+        totals.setColumnStretch(0, 1)
+        for row, (caption, value) in enumerate((
+            (t("subtotal", "Subtotal"), self.subtotal_label),
+            (t("tax", "Tax"), self.tax_label),
+            (t("discount", "Discount"), self.discount_label),
+        )):
+            caption_label = QLabel(caption)
+            caption_label.setObjectName("totalLabel")
+            value.setObjectName("totalValue")
+            value.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            totals.addWidget(caption_label, row, 0)
+            totals.addWidget(value, row, 1)
+        grand_caption = QLabel(t("total", "Total"))
+        grand_caption.setObjectName("grandLabel")
+        self.total_label.setObjectName("grandValue")
+        self.total_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        totals.addWidget(grand_caption, 3, 0)
+        totals.addWidget(self.total_label, 3, 1)
+        totals.setRowMinimumHeight(3, px(40))
+        ticket_layout.addLayout(totals)
         self.pay_button = QPushButton(t("take_payment", "Take payment"))
         self.pay_button.setProperty("checkout", True)
         self.pay_button.setEnabled(False)
@@ -307,27 +332,24 @@ class CurrentSaleView(QWidget):
                 widget.quantity_changed.connect(self._set_quantity)
                 widget.remove_requested.connect(self._remove_item)
                 self.cart_lines_layout.addWidget(widget)
-            self.subtotal_label.setText(
-                f"{t('subtotal', 'Subtotal')}: {fmt(int(self.quote['subtotal_minor']), self.currency)}"
-            )
-            self.tax_label.setText(
-                f"{t('tax', 'Tax')}: {fmt(int(self.quote['tax_minor']), self.currency)}"
-            )
-            self.discount_label.setText(
-                f"{t('discount', 'Discount')}: {fmt(int(self.quote['discount_minor']), self.currency)}"
-            )
-            self.total_label.setText(
-                f"{t('total', 'Total')}: {fmt(int(self.quote['total_minor']), self.currency)}"
-            )
+            self.cart_lines_layout.addStretch(1)
+            self.subtotal_label.setText(fmt(int(self.quote["subtotal_minor"]), self.currency))
+            self.tax_label.setText(fmt(int(self.quote["tax_minor"]), self.currency))
+            self.discount_label.setText(fmt(int(self.quote["discount_minor"]), self.currency))
+            self.total_label.setText(fmt(int(self.quote["total_minor"]), self.currency))
         else:
             empty = QLabel(t("cart_empty", "Your sale is empty. Add items from the catalogue."))
+            empty.setObjectName("cartEmpty")
             empty.setWordWrap(True)
+            empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.cart_lines_layout.addStretch(1)
             self.cart_lines_layout.addWidget(empty)
+            self.cart_lines_layout.addStretch(1)
             zero = fmt(0, self.currency)
-            self.subtotal_label.setText(f"{t('subtotal', 'Subtotal')}: {zero}")
-            self.tax_label.setText(f"{t('tax', 'Tax')}: {zero}")
-            self.discount_label.setText(f"{t('discount', 'Discount')}: {zero}")
-            self.total_label.setText(f"{t('total', 'Total')}: {zero}")
+            self.subtotal_label.setText(zero)
+            self.tax_label.setText(zero)
+            self.discount_label.setText(zero)
+            self.total_label.setText(zero)
         self.pay_button.setEnabled(has_lines)
         self.hold_button.setEnabled(has_lines)
 
@@ -359,4 +381,5 @@ class CurrentSaleView(QWidget):
             if widget is not None:
                 widget.hide()
                 widget.deleteLater()
+            # Spacer items need no cleanup; takeAt already detached them.
 
