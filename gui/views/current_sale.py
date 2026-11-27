@@ -189,6 +189,11 @@ class CurrentSaleView(QWidget):
         self._load_categories()
         self._search_catalogue(self.search.text())
 
+    def apply_palette(self) -> None:
+        """Rebuild palette-tinted catalogue and cart controls after a theme change."""
+        self.refresh_catalog()
+        self._render_cart()
+
     def _select_category(self, category_id: int | None) -> None:
         self.category_id = category_id
         selected_key = "all" if category_id is None else str(category_id)

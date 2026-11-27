@@ -20,6 +20,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     checkout_text = palette.checkout_text or palette.text
     checkout_hover = shade(palette.checkout, 112)
     checkout_pressed = shade(palette.checkout, 82)
+    danger_hover = shade(palette.danger, 88)
     chevron_path = (
         Path(__file__).resolve().parents[2] / "assets" / "icons" / "chevron-down.svg"
     ).as_posix()
@@ -164,11 +165,11 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         border-radius: {px(12)}px;
     }}
     QLabel#userAvatar {{
-        background: {palette.sidebar_active}; color: {accent};
+        background: {palette.sidebar_active}; color: {palette.sidebar_active_text};
         border: {px(1)}px solid {palette.sidebar_border};
         border-radius: {px(16)}px; font-weight: {WEIGHT_MEDIUM};
     }}
-    QLabel#userName {{ font-weight: {WEIGHT_MEDIUM}; color: #FFFFFF; }}
+    QLabel#userName {{ font-weight: {WEIGHT_MEDIUM}; color: {palette.sidebar_text}; }}
     QFrame[sidebar="true"] QLabel#userRole {{
         color: {palette.sidebar_muted}; font-size: {fpx("small")}px;
     }}
@@ -227,7 +228,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         background: {palette.danger}; color: #FFFFFF;
         border-color: {palette.danger}; font-weight: {WEIGHT_SEMIBOLD};
     }}
-    QPushButton[danger="true"]:hover {{ background: #B91C1C; border-color: #B91C1C; }}
+    QPushButton[danger="true"]:hover {{ background: {danger_hover}; border-color: {danger_hover}; }}
     QPushButton[categoryChip="true"] {{
         background: {palette.surface_alt}; border-color: transparent; color: {palette.secondary};
         border-radius: {px(999)}px; padding: {px(7)}px {px(15)}px;
@@ -341,7 +342,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         background: {palette.scrollbar}; min-height: {px(34)}px;
         border-radius: {px(5)}px; border: {px(2)}px solid {palette.canvas};
     }}
-    QScrollBar::handle:vertical:hover {{ background: #94A3B8; }}
+    QScrollBar::handle:vertical:hover {{ background: {palette.muted}; }}
     QScrollBar:horizontal {{
         background: transparent; height: {px(10)}px; margin: {px(2)}px {px(4)}px;
     }}
@@ -349,7 +350,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
         background: {palette.scrollbar}; min-width: {px(34)}px;
         border-radius: {px(5)}px; border: {px(2)}px solid {palette.canvas};
     }}
-    QScrollBar::handle:horizontal:hover {{ background: #94A3B8; }}
+    QScrollBar::handle:horizontal:hover {{ background: {palette.muted}; }}
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
     QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
         height: {px(0)}px; background: transparent;
@@ -425,7 +426,7 @@ def build_stylesheet(palette: Palette = DEFAULT_PALETTE) -> str:
     QLabel#receiptBusiness {{ font-size: {fpx("receipt_heading")}px; font-weight: {WEIGHT_SEMIBOLD}; }}
     QLabel#errorMessage {{ color: {palette.danger}; font-size: {fpx("error")}px; }}
     QProgressBar#receiptProgress {{
-        background: #E2E8F0; border: none; border-radius: {px(3)}px;
+        background: {palette.border}; border: none; border-radius: {px(3)}px;
         max-height: {px(6)}px; text-align: center;
     }}
     QProgressBar#receiptProgress::chunk {{

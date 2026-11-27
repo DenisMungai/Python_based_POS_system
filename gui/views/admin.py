@@ -19,7 +19,7 @@ from backend.core.money import fmt, fmt_qty
 from gui.i18n import t
 from gui.styles.fonts import fpx
 from gui.styles.qss import build_stylesheet
-from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, px
+from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, Palette, px, set_active_palette
 from gui.widgets import (
     KpiCard, ModuleToggleRow, Toast, apply_card_elevation, clear_table_widgets,
     configure_table,
@@ -27,9 +27,10 @@ from gui.widgets import (
 
 
 class SalesSeriesChart(QWidget):
-    def __init__(self, color: str, parent: QWidget | None = None) -> None:
+    def __init__(self, palette: Palette, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.color = QColor(color)
+        self.palette = palette
+        self.color = QColor(palette.primary)
         self.series: list[dict[str, Any]] = []
         self.setMinimumHeight(px(150))
 
@@ -37,15 +38,21 @@ class SalesSeriesChart(QWidget):
         self.series = series
         self.update()
 
+    def apply_palette(self, palette: Palette) -> None:
+        """Recolour the chart after an accent palette change."""
+        self.palette = palette
+        self.color = QColor(palette.primary)
+        self.update()
+
     def paintEvent(self, event: QPaintEvent) -> None:
         event.accept()
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         bounds = self.rect().adjusted(px(38), px(12), -px(12), -px(30))
-        painter.setPen(QPen(QColor("#D7E0E2"), px(1)))
+        painter.setPen(QPen(QColor(self.palette.border), px(1)))
         painter.drawLine(bounds.bottomLeft(), bounds.bottomRight())
         if not self.series:
-            painter.setPen(QColor("#64748B"))
+            painter.setPen(QColor(self.palette.secondary))
             painter.drawText(bounds, Qt.AlignmentFlag.AlignCenter, t("no_sales", "No sales in this period"))
             return
         maximum = max(int(row["sales_minor"]) for row in self.series) or 1
@@ -60,7 +67,7 @@ class SalesSeriesChart(QWidget):
                 int(left), int(bounds.bottom() - height), int(bar_width),
                 max(px(2), int(height)), px(3), px(3),
             )
-        painter.setPen(QColor("#64748B"))
+        painter.setPen(QColor(self.palette.secondary))
         font = self.font()
         font.setPixelSize(fpx("caption"))
         painter.setFont(font)
@@ -120,7 +127,7 @@ class ReportsView(QWidget):
         layout.addLayout(self.kpi_grid)
         palette_name = context.settings.get("accent_palette", DEFAULT_PALETTE.name) or DEFAULT_PALETTE.name
         palette = PALETTES.get(palette_name, DEFAULT_PALETTE)
-        self.chart = SalesSeriesChart(palette.primary)
+        self.chart = SalesSeriesChart(palette)
         self.chart.setProperty("card", True)
         layout.addWidget(self.chart)
         tables = QHBoxLayout()
@@ -139,6 +146,10 @@ class ReportsView(QWidget):
         layout.addLayout(tables, 1)
         self._period_changed()
         self.refresh()
+
+    def apply_palette(self, palette: Palette) -> None:
+        """Recolour palette-tinted chart marks after an accent change."""
+        self.chart.apply_palette(palette)
 
     def _period_changed(self) -> None:
         period = self.period.currentData()
@@ -610,6 +621,7 @@ class SettingsView(QWidget):
             self.toast.show_message(t("invalid_tax_rate", "Enter a non-negative tax rate with up to two decimal places."))
             return
         palette = PALETTES[self.palette.currentText()]
+        set_active_palette(palette)
         application = QApplication.instance()
         if application is not None:
             application.setStyleSheet(build_stylesheet(palette))

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Made the navigation rail adopt the selected accent palette, including its
+  hover, active, muted, and avatar colors, and refresh custom-painted controls
+  when the palette changes at runtime.
 - Removed the em dash from the desktop window title between the business and
   sale labels.
 - Aligned the administrator account controls with the sidebar navigation,

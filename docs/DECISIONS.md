@@ -25,6 +25,10 @@
 
 - Emerald is the default accent, using `#15A046` for primary fills. Small text
   on light surfaces uses the darker `#116B35` companion for WCAG AA contrast.
+- Every accent palette supplies its own navigation-rail shades so the sidebar,
+  active navigation pill, account card, and icon tints change with the accent
+  instead of sharing one fixed dark rail. Palette changes also rebuild
+  palette-tinted catalogue cards, cart lines, and the report chart at runtime.
 - Operations and administration remain permission-gated through backend
   services; the Qt shell only hides routes for users without access.
 - Backup restore is restricted to paths in the application's managed backup

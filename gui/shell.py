@@ -43,6 +43,9 @@ class AppWindow(QMainWindow):
             DEFAULT_PALETTE,
         )
         set_active_palette(self.palette)
+        self.profile_button: QPushButton | None = None
+        self.logout_button: QPushButton | None = None
+        self.global_search: QLineEdit | None = None
         user = context.auth.current_user
         if user is None:
             raise RuntimeError("The application shell requires an authenticated user.")
@@ -226,12 +229,14 @@ class AppWindow(QMainWindow):
             profile.setCursor(Qt.CursorShape.PointingHandCursor)
             profile.clicked.connect(self._edit_profile)
             sidebar_layout.addWidget(profile)
+            self.profile_button = profile
         logout = QPushButton(t("log_out", "Log out"))
         logout.setIcon(load_icon("logout", self.palette.sidebar_muted, 18))
         logout.setIconSize(QSize(px(18), px(18)))
         logout.setCursor(Qt.CursorShape.PointingHandCursor)
         logout.clicked.connect(self._logout)
         sidebar_layout.addWidget(logout)
+        self.logout_button = logout
 
         root_layout.addWidget(sidebar)
         content = QVBoxLayout()
@@ -268,6 +273,7 @@ class AppWindow(QMainWindow):
         )
         global_search.textChanged.connect(self._global_search)
         topbar_layout.addWidget(global_search)
+        self.global_search = global_search
         content.addWidget(topbar)
         content.addWidget(self.stack, 1)
         self.setCentralWidget(root)
@@ -350,6 +356,44 @@ class AppWindow(QMainWindow):
             orders.refresh()
         self._navigate("sales")
 
+    def _apply_palette(self, palette: Palette) -> None:
+        """Restyle the shell and every custom-painted control for a new palette."""
+        self.palette = palette
+        set_active_palette(palette)
+        application = QApplication.instance()
+        if application is not None:
+            application.setStyleSheet(build_stylesheet(palette))
+        icon_by_route = {
+            "dashboard": "dashboard", "products": "catalog", "customers": "customer",
+            "sales_history": "history", "orders": "orders", "returns": "returns",
+            "discounts": "discount", "reports": "reports", "users": "users",
+            "settings": "settings", "sales": "sales",
+        }
+        for route, nav in self.navigation.items():
+            nav.icon_name = icon_by_route[route]
+            nav.palette = palette
+            nav.setIcon(load_icon(
+                nav.icon_name,
+                palette.sidebar_active_text if nav.property("active") else palette.sidebar_muted,
+                18,
+            ))
+            nav.update()
+        if self.profile_button is not None:
+            self.profile_button.setIcon(load_icon("customer", palette.sidebar_muted, 18))
+        if self.logout_button is not None:
+            self.logout_button.setIcon(load_icon("logout", palette.sidebar_muted, 18))
+        if self.global_search is not None:
+            actions = self.global_search.actions()
+            if actions:
+                actions[0].setIcon(load_icon("search", palette.muted, 16))
+        for view in self.routes.values():
+            if isinstance(view, CurrentSaleView):
+                view.apply_palette()
+            elif isinstance(view, DashboardView):
+                view.current_sale.apply_palette()
+            elif isinstance(view, ReportsView):
+                view.apply_palette(palette)
+
     def _on_backend_event(self, name: str, payload: object) -> None:
         if name == "settings_changed":
             business = self.context.settings.get("business_name", "POS") or "POS"
@@ -358,29 +402,10 @@ class AppWindow(QMainWindow):
             if mark is not None:
                 mark.setText(business[:1].upper() or "P")
             self.topbar_brand.setText(business)
-            palette_name = self.context.settings.get("accent_palette", DEFAULT_PALETTE.name)
-            palette = PALETTES.get(palette_name or "", DEFAULT_PALETTE)
-            self.palette = palette
-            set_active_palette(palette)
-            application = QApplication.instance()
-            if application is not None:
-                application.setStyleSheet(build_stylesheet(palette))
-            icon_by_route = {
-                "dashboard": "dashboard", "products": "catalog", "customers": "customer",
-                "sales_history": "history", "orders": "orders", "returns": "returns",
-                "discounts": "discount", "reports": "reports", "users": "users",
-                "settings": "settings", "sales": "sales",
-            }
-            for route, nav in self.navigation.items():
-                nav.icon_name = icon_by_route[route]
-                nav.palette = palette
-                nav.setIcon(load_icon(
-                    nav.icon_name,
-                    palette.sidebar_active_text if nav.property("active") else palette.sidebar_muted,
-                    18,
-                ))
-                nav.update()
             setting_key = payload.get("key") if isinstance(payload, dict) else None
+            if setting_key == "accent_palette":
+                palette_name = self.context.settings.get("accent_palette", DEFAULT_PALETTE.name)
+                self._apply_palette(PALETTES.get(palette_name or "", DEFAULT_PALETTE))
             if setting_key == "business_name":
                 self.setWindowTitle(f"{business} {self.context.settings.term('sale', 'Sale')}")
         if name in {"catalog_changed", "stock_changed"}:

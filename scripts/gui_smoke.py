@@ -24,7 +24,7 @@ from gui.dialogs.profile import ProfileDialog
 from gui.dialogs.sale_complete import SaleCompleteDialog
 from gui.dialogs.setup import SetupDialog
 from gui.shell import AppWindow
-from gui.styles.tokens import DEFAULT_PALETTE, px
+from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, px
 from gui.views.current_sale import CurrentSaleView
 from gui.widgets import PRODUCT_TILE_RATIO, ProductCard, QuantityStepper, ReceiptWidget, cover_pixmap
 
@@ -449,6 +449,27 @@ def main() -> int:
             settings = window.routes["settings"]
             if not settings.payment_checks["Bank transfer"].isChecked():
                 raise RuntimeError("Settings does not reflect the configured Bank transfer method.")
+            sidebar_colors = {name: palette.sidebar for name, palette in PALETTES.items()}
+            if len(set(sidebar_colors.values())) != len(sidebar_colors):
+                raise RuntimeError("Accent palettes do not define distinct navigation rail colors.")
+            context.settings.set("accent_palette", "Teal")
+            application.processEvents()
+            if window.palette.name != "Teal":
+                raise RuntimeError("Changing the accent palette did not restyle the application shell.")
+            if PALETTES["Teal"].sidebar not in application.styleSheet():
+                raise RuntimeError("The navigation rail did not adopt the selected accent palette.")
+            if any(nav.palette.name != "Teal" for nav in window.navigation.values()):
+                raise RuntimeError("Sidebar navigation icons did not adopt the selected accent palette.")
+            if reports.chart.palette.name != "Teal":
+                raise RuntimeError("The report chart did not adopt the selected accent palette.")
+            if sale_view._product_cards and any(
+                card.palette.name != "Teal" for card in sale_view._product_cards
+            ):
+                raise RuntimeError("Catalogue cards did not adopt the selected accent palette.")
+            context.settings.set("accent_palette", DEFAULT_PALETTE.name)
+            application.processEvents()
+            if window.palette.name != DEFAULT_PALETTE.name:
+                raise RuntimeError("Restoring the default accent palette did not restyle the shell.")
             if not any(
                 button.text() == "My profile"
                 for button in window.findChildren(QPushButton)

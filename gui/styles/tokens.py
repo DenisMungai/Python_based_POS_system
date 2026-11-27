@@ -111,6 +111,9 @@ PALETTES: dict[str, Palette] = {
     "Navy": Palette(
         "Navy", "#1D4ED8", "#1E40AF", "#1E3A8A", "#EFF6FF", "#FFFFFF",
         accent_on_dark="#6B9BFF", **_BASE,
+        sidebar="#101C3D", sidebar_hover="#182750", sidebar_active="#E8EEFB",
+        sidebar_text="#E7ECF9", sidebar_muted="#93A3C7", sidebar_border="#22315A",
+        sidebar_active_text="#1E3A8A",
     ),
     # Deep evergreen surfaces with restrained champagne-brass actions create a
     # quieter, hospitality-grade default without hard-coding a business brand.
@@ -134,24 +137,38 @@ PALETTES: dict[str, Palette] = {
     "Teal": Palette(
         "Teal", "#0F766E", "#115E59", "#134E4A", "#F0FDFA", "#FFFFFF",
         accent_on_dark="#2DD4BF", **_BASE,
+        sidebar="#0B2E2B", sidebar_hover="#113E39", sidebar_active="#DCF3EE",
+        sidebar_text="#E4F3F0", sidebar_muted="#8CB3AD", sidebar_border="#17433E",
+        sidebar_active_text="#0B4A45",
     ),
     "Amber": Palette(
         "Amber", "#B45309", "#92400E", "#78350F", "#FFFBEB", "#FFFFFF",
         accent_on_dark="#FBBF24", **_BASE,
+        sidebar="#2E1F10", sidebar_hover="#3E2B16", sidebar_active="#F7E8CD",
+        sidebar_text="#F7EFE2", sidebar_muted="#BCA98B", sidebar_border="#46331C",
+        sidebar_active_text="#7A4A0B",
     ),
     "Red": Palette(
         "Red", "#DC2626", "#B91C1C", "#991B1B", "#FEF2F2", "#FFFFFF",
         accent_on_dark="#F87171", **_BASE,
+        sidebar="#3A1515", sidebar_hover="#4C1C1C", sidebar_active="#FAE5E3",
+        sidebar_text="#FAEDEC", sidebar_muted="#C6A09D", sidebar_border="#552120",
+        sidebar_active_text="#8E1F1F",
     ),
     "Slate": Palette(
         "Slate", "#1E293B", "#334155", "#0F172A", "#F1F5F9", "#FFFFFF",
         accent_on_dark="#94A3B8", **_BASE,
+        sidebar="#0E1626", sidebar_hover="#172136", sidebar_active="#E3E9F2",
+        sidebar_text="#E8EDF5", sidebar_muted="#94A3B8", sidebar_border="#1E2B42",
+        sidebar_active_text="#1E293B",
     ),
     "Obsidian": Palette(
         "Obsidian", "#16181D", "#2A2E36", "#0B0C0F", "#F4EFE3", "#F7F3EA",
         primary_text="#7A5C1E", accent_on_dark="#D4AF6A",
         surface_alt="#F1ECE0", hairline="#EFEADD", success_tint="#E8F3EA",
-        sidebar="#111317", sidebar_hover="#1B1E24", sidebar_active="#23272E",
+        sidebar="#111317", sidebar_hover="#1B1E24", sidebar_active="#2A2620",
+        sidebar_text="#F3EFE6", sidebar_muted="#A69E8E", sidebar_border="#26231D",
+        sidebar_active_text="#F1E5CE",
         **{**_WARM, "checkout": "#B8924A"},
     ),
 }

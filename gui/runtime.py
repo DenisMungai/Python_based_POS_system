@@ -7,7 +7,7 @@ from gui.dialogs.login import LoginDialog
 from gui.dialogs.setup import SetupDialog
 from gui.shell import AppWindow
 from gui.styles.qss import build_stylesheet
-from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, Palette, px
+from gui.styles.tokens import DEFAULT_PALETTE, PALETTES, Palette, px, set_active_palette
 
 
 def run_desktop(context: AppContext) -> int:
@@ -20,6 +20,7 @@ def run_desktop(context: AppContext) -> int:
                 return 0
         palette_name = context.settings.get("accent_palette", DEFAULT_PALETTE.name) or DEFAULT_PALETTE.name
         palette: Palette = PALETTES.get(palette_name, DEFAULT_PALETTE)
+        set_active_palette(palette)
         application.setStyleSheet(build_stylesheet(palette))
         if LoginDialog(context).exec() != LoginDialog.DialogCode.Accepted:
             return 0
